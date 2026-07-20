@@ -16,7 +16,7 @@ import { geocodeAddress, getRoute } from '../services/api';
 import { solveELDLogs } from '../utils/eldSolver';
 import './TripPlanner.css';
 
-const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState }) => {
+const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState, driverInfo, setDriverInfo }) => {
   const { inputs, locations, routeGeometry, metrics, plannedStops } = tripPlanState;
 
   // centralized state setters
@@ -165,6 +165,18 @@ const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState
       // Pass HOS result to App.jsx to synchronize the ELD Logs tab
       if (onEldSolved) {
         onEldSolved({
+          // Driver & carrier metadata from form
+          driverInfo: {
+            driverName:  driverInfo?.driverName  || '',
+            driverId:    driverInfo?.driverId    || '',
+            truckNumber: driverInfo?.truckNumber || '',
+            coDriver:    driverInfo?.coDriver    || 'None',
+            carrierId:   driverInfo?.carrierId   || '',
+            mainOffice:  driverInfo?.mainOffice  || ''
+          },
+          // Route context
+          routeFrom: inputs.currentLocation,
+          routeTo:   inputs.dropoffLocation,
           dailyLogs: data.daily_logs.map(day => ({
             dayNumber: day.day,
             dateString: day.date,
@@ -375,6 +387,80 @@ const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState
                       required
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* ── Driver Info section ── */}
+              <div className="planner-section-divider">
+                <span>DRIVER &amp; VEHICLE INFO</span>
+              </div>
+
+              <div className="planner-row-inputs">
+                <div className="planner-input-group">
+                  <label className="planner-input-lbl">DRIVER NAME</label>
+                  <input
+                    type="text"
+                    className="planner-raw-input"
+                    placeholder="e.g. Alex Rivera"
+                    value={driverInfo?.driverName || ''}
+                    onChange={e => setDriverInfo(prev => ({ ...prev, driverName: e.target.value }))}
+                  />
+                </div>
+                <div className="planner-input-group">
+                  <label className="planner-input-lbl">DRIVER ID</label>
+                  <input
+                    type="text"
+                    className="planner-raw-input"
+                    placeholder="e.g. #44920"
+                    value={driverInfo?.driverId || ''}
+                    onChange={e => setDriverInfo(prev => ({ ...prev, driverId: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="planner-row-inputs">
+                <div className="planner-input-group">
+                  <label className="planner-input-lbl">TRUCK / VEHICLE #</label>
+                  <input
+                    type="text"
+                    className="planner-raw-input"
+                    placeholder="e.g. TRK-492"
+                    value={driverInfo?.truckNumber || ''}
+                    onChange={e => setDriverInfo(prev => ({ ...prev, truckNumber: e.target.value }))}
+                  />
+                </div>
+                <div className="planner-input-group">
+                  <label className="planner-input-lbl">CO-DRIVER</label>
+                  <input
+                    type="text"
+                    className="planner-raw-input"
+                    placeholder="None"
+                    value={driverInfo?.coDriver || ''}
+                    onChange={e => setDriverInfo(prev => ({ ...prev, coDriver: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="planner-row-inputs">
+                <div className="planner-input-group">
+                  <label className="planner-input-lbl">CARRIER NAME</label>
+                  <input
+                    type="text"
+                    className="planner-raw-input"
+                    placeholder="e.g. Spotter Labs LLC"
+                    value={driverInfo?.carrierId || ''}
+                    onChange={e => setDriverInfo(prev => ({ ...prev, carrierId: e.target.value }))}
+                  />
+                </div>
+                <div className="planner-input-group">
+                  <label className="planner-input-lbl">MAIN OFFICE / HQ</label>
+                  <input
+                    type="text"
+                    className="planner-raw-input"
+                    placeholder="e.g. Chicago, IL"
+                    value={driverInfo?.mainOffice || ''}
+                    onChange={e => setDriverInfo(prev => ({ ...prev, mainOffice: e.target.value }))}
+                  />
                 </div>
               </div>
 

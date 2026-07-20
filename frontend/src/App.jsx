@@ -15,6 +15,16 @@ function App() {
   // Shared ELD calculation results so the ELD Logs tab can display them!
   const [eldResult, setEldResult] = useState(null);
 
+  // Driver / carrier info — shared between TripPlanner form and ELD logs
+  const [driverInfo, setDriverInfo] = useState({
+    driverName:  '',
+    driverId:    '',
+    truckNumber: '',
+    coDriver:    'None',
+    carrierId:   '',
+    mainOffice:  ''
+  });
+
   // Centered Trip Plan State for persistence across tab changes
   const [tripPlanState, setTripPlanState] = useState({
     inputs: {
@@ -60,6 +70,8 @@ function App() {
             onEldSolved={(result) => setEldResult(result)}
             tripPlanState={tripPlanState}
             setTripPlanState={setTripPlanState}
+            driverInfo={driverInfo}
+            setDriverInfo={setDriverInfo}
           />
         );
 
@@ -77,7 +89,9 @@ function App() {
         return (
           <ELDLogsPage 
             onTabChange={handleTabChange} 
-            eldResult={eldResult} 
+            eldResult={eldResult}
+            driverInfo={driverInfo}
+            tripPlanState={tripPlanState}
           />
         );
 

@@ -307,8 +307,27 @@ const defaultMockLogs = [
 /* ═══════════════════════════════════════════════════════════
    MAIN PAGE
 ═══════════════════════════════════════════════════════════ */
-const ELDLogsPage = ({ onTabChange, eldResult }) => {
+const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
   const hasRealData = eldResult?.dailyLogs?.length > 0;
+
+  // Resolve driver display values — real data when provided, fallbacks otherwise
+  const di = driverInfo || {};
+  const resolvedDriver = {
+    name:       di.driverName  || (hasRealData ? '' : 'Alex Rivera'),
+    id:         di.driverId    || (hasRealData ? '' : '#44920'),
+    truck:      di.truckNumber || (hasRealData ? '—' : 'TRK-492'),
+    coDriver:   di.coDriver    || 'None',
+    carrier:    di.carrierId   || (hasRealData ? '—' : 'Spotter Labs Logistics LLC'),
+    mainOffice: di.mainOffice  || (hasRealData ? '—' : 'Chicago, IL'),
+  };
+  // Avatar initials from name
+  const avatarInitials = resolvedDriver.name
+    ? resolvedDriver.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    : '?';
+
+  // Shipping doc from eldResult if present, else show as manifest-{date}
+  const shippingDoc = eldResult?.shippingDoc ||
+    (hasRealData ? `MFT-${eldResult.dailyLogs[0]?.dateString?.replace(/-/g,'') || '—'}` : 'MANIFEST-81203');
 
   const [selectedDayIdx, setSelectedDayIdx] = useState(0);
   const [localLogs, setLocalLogs] = useState(() =>
@@ -390,10 +409,10 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
             </div>
             <div className="eld-user-widget-detailed">
               <div className="eld-user-info">
-                <span className="eld-username">Alex Rivera</span>
-                <span className="eld-user-role">ID: #44920</span>
+                <span className="eld-username">{resolvedDriver.name || 'Driver'}</span>
+                <span className="eld-user-role">{resolvedDriver.id ? `ID: ${resolvedDriver.id}` : 'No ID set'}</span>
               </div>
-              <div className="eld-avatar-circle">AR</div>
+              <div className="eld-avatar-circle">{avatarInitials}</div>
             </div>
           </div>
         </header>
@@ -446,26 +465,26 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
               </button>
             </div>
 
-            {/* FMCSA Header fields */}
+            {/* FMCSA Header fields — all from real data */}
             <div className="fmcsa-header-grid">
               {[
-                ['DATE', currentDateString],
+                ['DATE',             currentDateString],
                 ['TOTAL MILES TODAY', `${miles} mi`],
-                ['CARRIER NAME', 'Spotter Labs Logistics LLC'],
-                ['MAIN OFFICE', 'Chicago, IL'],
-                ['VEHICLE NUMBER', 'TRK-492'],
-                ['CO-DRIVER', 'None'],
-                ['SHIPPING DOC #', 'MANIFEST-81203'],
-                ['24HR START TIME', 'Midnight (00:00)'],
+                ['CARRIER NAME',      resolvedDriver.carrier],
+                ['MAIN OFFICE',       resolvedDriver.mainOffice],
+                ['VEHICLE NUMBER',    resolvedDriver.truck],
+                ['CO-DRIVER',         resolvedDriver.coDriver],
+                ['SHIPPING DOC #',    shippingDoc],
+                ['24HR START TIME',   'Midnight (00:00)'],
               ].map(([lbl, val]) => (
                 <div key={lbl} className="fmcsa-header-cell">
                   <span className="cell-lbl">{lbl}</span>
-                  <span className="cell-val">{val}</span>
+                  <span className="cell-val">{val || '—'}</span>
                 </div>
               ))}
               <div className="fmcsa-header-cell cell-sig">
                 <span className="cell-lbl">DRIVER SIGNATURE</span>
-                <span className="cell-val signature-text">Alex Rivera</span>
+                <span className="cell-val signature-text">{resolvedDriver.name || '—'}</span>
               </div>
             </div>
 

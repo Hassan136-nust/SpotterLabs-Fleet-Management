@@ -513,3 +513,28 @@
   box-shadow: 0 0 8px rgba(100, 116, 139, 0.4);
 }
 
+/* ── Driver & Vehicle section divider ── */
+.planner-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 10px;
+}
+
+.planner-section-divider::before,
+.planner-section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #2b201a;
+}
+
+.planner-section-divider span {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #8c7365;
+  white-space: nowrap;
+}
+
+
