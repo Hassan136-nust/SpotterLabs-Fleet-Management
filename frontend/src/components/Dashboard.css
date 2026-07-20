@@ -11,18 +11,21 @@
   flex-direction: column;
 }
 
-/* Top Navbar */
 .top-navbar {
   height: 64px;
-  background-color: #f97316;
-  border-bottom: 1px solid #ea580c;
+  background-color: #ea580c; /* Less bright, deeper orange */
+  border-bottom: none;
   position: sticky;
-  top: 0;
+  top: 16px; /* Offset from the top to look floating */
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  width: 92%;
+  max-width: 1200px;
+  margin: 16px auto;
+  border-radius: 16px; /* Rounded corners */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); /* Nice shadow to float */
 }
 
 .navbar-container {
