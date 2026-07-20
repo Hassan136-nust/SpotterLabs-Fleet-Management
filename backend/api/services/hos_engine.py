@@ -99,7 +99,12 @@ def plan_trip(current_location: str, pickup_location: str, dropoff_location: str
     
     # Run simulation passing route geometry coordinates for stops interpolation
     route_coords = route_data.get('geometry', {}).get('coordinates', [])
-    simulation = run_hos_simulation(total_miles, leg1_duration, leg2_duration, cycle_used, route_coords)
+    simulation = run_hos_simulation(
+        total_miles, leg1_duration, leg2_duration, cycle_used, route_coords,
+        current_location=current_location,
+        pickup_location=pickup_location,
+        dropoff_location=dropoff_location
+    )
     
     # Extract calculated stops list
     stops = simulation['stops']
@@ -121,7 +126,10 @@ def plan_trip(current_location: str, pickup_location: str, dropoff_location: str
         "daily_logs": simulation['daily_logs']
     }
 
-def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, route_coords):
+def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, route_coords,
+                       current_location="Starting Terminal",
+                       pickup_location="Pickup Location",
+                       dropoff_location="Dropoff Location"):
     """
     Simulates the HOS clocks minute-by-minute and calculates GPS coordinates for stops.
     """
@@ -156,7 +164,19 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
         "lng": start_coords[0] if len(start_coords) > 0 else -98.5795
     })
     
-    def add_event(status, duration, desc, location="En route"):
+    def add_event(status, duration, desc, location=None):
+        # Derive a real location label from current phase if not explicitly provided
+        if location is None:
+            if phase == "leg1":
+                location = f"En route to {pickup_location}"
+            elif phase == "pickup":
+                location = pickup_location
+            elif phase == "leg2":
+                location = f"En route to {dropoff_location}"
+            elif phase == "dropoff":
+                location = dropoff_location
+            else:
+                location = current_location
         events.append({
             "status": status,
             "start": format_min_to_time(time - duration),
@@ -180,7 +200,7 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
     add_time_step(STATUS_ON, 30)
     on_duty_clock += 30
     remaining_cycle -= 30
-    add_event(STATUS_ON, 30, "Pre-Trip Inspection")
+    add_event(STATUS_ON, 30, "Pre-Trip Inspection", current_location)
 
     while phase != "complete":
         # 1. 34-hour restart if cycle exhausted
@@ -200,7 +220,8 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                 "lat": lat_lon[0],
                 "lng": lat_lon[1]
             })
-            add_event(STATUS_OFF, 2040, "34-Hour Restart (Cycle Reset)", "Rest stop")
+            add_event(STATUS_OFF, 2040, "34-Hour Restart (Cycle Reset)",
+                      f"Rest Area — Mile {round(current_miles)} en route to {pickup_location if phase in ('leg1','pickup') else dropoff_location}")
             continue
             
         # 2. 10-hour rest if daily shift limits reached
@@ -219,7 +240,8 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                 "lat": lat_lon[0],
                 "lng": lat_lon[1]
             })
-            add_event(STATUS_OFF, 600, "10-Hour Rest Break", "Rest stop")
+            add_event(STATUS_OFF, 600, "10-Hour Rest Break",
+                      f"Rest Area — Mile {round(current_miles)} en route to {pickup_location if phase in ('leg1','pickup') else dropoff_location}")
             continue
             
         # 3. 30-min break if 8 hours driven
@@ -237,7 +259,8 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                 "lat": lat_lon[0],
                 "lng": lat_lon[1]
             })
-            add_event(STATUS_OFF, 30, "30-Minute Rest Break", "Rest stop")
+            add_event(STATUS_OFF, 30, "30-Minute Break",
+                      f"Mile {round(current_miles)} — en route to {pickup_location if phase in ('leg1','pickup') else dropoff_location}")
             continue
             
         # 4. Fuel Stop
@@ -257,7 +280,8 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                     "lat": lat_lon[0],
                     "lng": lat_lon[1]
                 })
-                add_event(STATUS_OFF, 600, "10-Hour Rest Break", "Rest stop")
+                add_event(STATUS_OFF, 600, "10-Hour Rest Break",
+                          f"Rest Area — Mile {round(current_miles)} en route to {dropoff_location}")
             else:
                 add_time_step(STATUS_ON, 30)
                 on_duty_clock += 30
@@ -274,7 +298,8 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                 })
                 miles_since_fuel = 0
                 continuous_driving = 0
-                add_event(STATUS_ON, 30, "Fueling Stop", "Fuel stop")
+                add_event(STATUS_ON, 30, "Fueling Stop",
+                          f"Fuel Stop — Mile {round(current_miles)} en route to {pickup_location if phase in ('leg1','pickup') else dropoff_location}")
             continue
 
         # 5. Process Leg 1
@@ -307,7 +332,8 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                         "lat": lat_lon[0],
                         "lng": lat_lon[1]
                     })
-                    add_event(STATUS_OFF, 600, "10-Hour Rest Break", "Rest stop")
+                    add_event(STATUS_OFF, 600, "10-Hour Rest Break",
+                              f"Rest Area — Mile {round(current_miles)} en route to {pickup_location}")
                 else:
                     add_time_step(STATUS_ON, 1)
                     on_duty_clock += 1
@@ -324,7 +350,7 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                     "lat": pickup_lat_lon[0],
                     "lng": pickup_lat_lon[1]
                 })
-                add_event(STATUS_ON, 60, "Loading Cargo", "Pickup Location")
+                add_event(STATUS_ON, 60, "Loading Cargo", pickup_location)
                 continuous_driving = 0
                 phase = "leg2"
                 
@@ -358,7 +384,8 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                         "lat": lat_lon[0],
                         "lng": lat_lon[1]
                     })
-                    add_event(STATUS_OFF, 600, "10-Hour Rest Break", "Rest stop")
+                    add_event(STATUS_OFF, 600, "10-Hour Rest Break",
+                              f"Rest Area — Mile {round(current_miles)} en route to {dropoff_location}")
                 else:
                     add_time_step(STATUS_ON, 1)
                     on_duty_clock += 1
@@ -375,12 +402,12 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                     "lat": dropoff_lat_lon[0],
                     "lng": dropoff_lat_lon[1]
                 })
-                add_event(STATUS_ON, 60, "Unloading Cargo", "Dropoff Location")
+                add_event(STATUS_ON, 60, "Unloading Cargo", dropoff_location)
                 # Post-trip inspection (15 mins)
                 add_time_step(STATUS_ON, 15)
                 on_duty_clock += 15
                 remaining_cycle -= 15
-                add_event(STATUS_ON, 15, "Post-Trip Inspection")
+                add_event(STATUS_ON, 15, "Post-Trip Inspection", dropoff_location)
                 phase = "complete"
 
     # Segment into daily logs
@@ -404,26 +431,48 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
         current_status = day_timeline[0]
         start_min = 0
         
+        # ── Build per-minute location context (which phase each minute belongs to) ──
+        # We track which phase produced each minute by using the events log
+        # and attributing their location to the daily slice.
+        total_day_mins_before = d * 1440
+
+        def get_event_location_for_minute(abs_min):
+            """Find which global event contains this absolute minute."""
+            running = 0
+            for ev in events:
+                sh, sm = (int(x) for x in ev['start'].split(':'))
+                eh, em = (int(x) for x in ev['end'].split(':'))
+                ev_start_abs = sh * 60 + sm
+                ev_end_abs   = eh * 60 + em
+                # Adjust for multi-day: use event order index
+                if ev_start_abs <= (abs_min % 1440) < ev_end_abs:
+                    return ev['location']
+            return f"En route to {dropoff_location}"
+
         for m in range(1, 1440):
             if day_timeline[m] != current_status:
                 duration_hrs = (m - start_min) / 60
+                abs_mid = total_day_mins_before + (start_min + m) // 2
+                loc = get_event_location_for_minute(abs_mid)
                 day_events.append({
                     "status": current_status,
                     "start": format_min_to_time(start_min),
                     "end": format_min_to_time(m),
                     "hours": round(duration_hrs, 2),
-                    "location": "En route" if current_status == STATUS_D else "Rest stop"
+                    "location": loc
                 })
                 current_status = day_timeline[m]
                 start_min = m
-                
+
         duration_hrs = (1440 - start_min) / 60
+        abs_mid = total_day_mins_before + (start_min + 1440) // 2
+        loc = get_event_location_for_minute(abs_mid)
         day_events.append({
             "status": current_status,
             "start": format_min_to_time(start_min),
             "end": "24:00",
             "hours": round(duration_hrs, 2),
-            "location": "En route" if current_status == STATUS_D else "Rest stop"
+            "location": loc
         })
 
         totals = {"off_duty": 0.0, "sleeper": 0.0, "driving": 0.0, "on_duty": 0.0, "total": 24.0}
@@ -463,8 +512,13 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
         
         remarks = []
         for ev in day_events:
-            if ev['status'] in [STATUS_ON, STATUS_D]:
-                remarks.append(f"{ev['start']} - {ev['location']} ({ev['status']})")
+            status_label = {
+                STATUS_OFF: "Off Duty",
+                STATUS_SB:  "Sleeper Berth",
+                STATUS_D:   "Driving",
+                STATUS_ON:  "On Duty (Not Driving)"
+            }.get(ev['status'], ev['status'])
+            remarks.append(f"{ev['start']} — {ev['location']} ({status_label}, {round(ev['hours'],2)}h)")
 
         daily_logs.append({
             "day": d + 1,
