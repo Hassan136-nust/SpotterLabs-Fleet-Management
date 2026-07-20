@@ -183,6 +183,17 @@ const MapContainer = ({ currentLoc, pickupLoc, dropoffLoc, routeGeometry, stops 
     }
   }, [currentLoc, pickupLoc, dropoffLoc, routeGeometry]);
 
+  // Smooth Google-Maps style flyTo zoom onto detected location
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (map && currentLoc && !routeGeometry) {
+      map.flyTo([currentLoc.lat, currentLoc.lon], 11, {
+        animate: true,
+        duration: 1.8
+      });
+    }
+  }, [currentLoc, routeGeometry]);
+
   return (
     <div className="map-wrapper">
       <div ref={mapRef} className="leaflet-map-container" />

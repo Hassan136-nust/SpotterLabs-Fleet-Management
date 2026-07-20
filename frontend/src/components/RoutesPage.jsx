@@ -23,32 +23,15 @@ import './RoutesPage.css';
 const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState }) => {
   const hasActiveRoute = tripPlanState && tripPlanState.routeGeometry;
 
-  // Centralized or fallback routes parameters
-  const defaultRouteGeometry = {
-    type: 'LineString',
-    coordinates: [
-      [-87.6298, 41.8781], // Chicago
-      [-93.6091, 41.6005], // Des Moines
-      [-95.9345, 41.2565], // Omaha
-      [-104.9903, 39.7392] // Denver
-    ]
-  };
-
-  const defaultLocations = {
-    current: { lat: 41.8781, lon: -87.6298, displayName: 'Chicago Hub' },
-    pickup: { lat: 41.6005, lon: -93.6091, displayName: 'Archer Logistics' },
-    dropoff: { lat: 39.7392, lon: -104.9903, displayName: 'Global Cold Storage' }
-  };
-
-  const routeGeometry = hasActiveRoute ? tripPlanState.routeGeometry : defaultRouteGeometry;
-  const locations = hasActiveRoute ? tripPlanState.locations : defaultLocations;
+  const routeGeometry = hasActiveRoute ? tripPlanState.routeGeometry : null;
+  const locations = hasActiveRoute ? tripPlanState.locations : { current: null, pickup: null, dropoff: null };
   const stops = hasActiveRoute ? tripPlanState.plannedStops : [];
   const metrics = hasActiveRoute ? tripPlanState.metrics : {
-    distance: 1012,
-    driveTime: 14.5,
-    eta: '04:30 PM',
-    etaDate: 'OCT 24',
-    remainingCycle: 3.7
+    distance: 0,
+    driveTime: 0,
+    eta: '—',
+    etaDate: '—',
+    remainingCycle: 70
   };
 
   // Convert decimal remaining HOS cycle hours to HH:MM format
@@ -320,88 +303,9 @@ const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState }) => {
                     );
                   })
                 ) : (
-                  <>
-                    {/* Node 1 */}
-                    <div className="node-detailed-item completed">
-                      <div className="node-status-check"><FiCheckCircle /></div>
-                      <div className="node-main-info">
-                        <h4 className="node-place-title">Start: Chicago Hub</h4>
-                        <span className="node-place-sub">Terminal 4, Gate B-12</span>
-                      </div>
-                      <div className="node-time-info">
-                        <span className="node-time-val">06:00 AM</span>
-                        <span className="node-time-status text-green-status">COMPLETED</span>
-                      </div>
-                    </div>
-
-                    {/* Node 2 */}
-                    <div className="node-detailed-item completed">
-                      <div className="node-status-check"><FiCheckCircle /></div>
-                      <div className="node-main-info">
-                        <h4 className="node-place-title">Pickup: Archer Logistics</h4>
-                        <span className="node-place-sub">1422 Industrial Way, Naperville IL</span>
-                      </div>
-                      <div className="node-time-info">
-                        <span className="node-time-val">07:45 AM</span>
-                        <span className="node-time-status text-green-status">COMPLETED</span>
-                      </div>
-                    </div>
-
-                    {/* Node 3 */}
-                    <div className="node-detailed-item upcoming">
-                      <div className="node-status-check"><span className="bullet-pulse-orange"></span></div>
-                      <div className="node-main-info">
-                        <h4 className="node-place-title">Fuel Stop: Love's Travel Stop</h4>
-                        <span className="node-place-sub">I-80 Exit 242, Iowa City</span>
-                        <div className="fuel-tag-badge">
-                          Price: $4.12/gal (Network Preferred)
-                        </div>
-                      </div>
-                      <div className="node-time-info">
-                        <span className="node-time-val">11:15 AM</span>
-                        <span className="node-time-status text-orange-status">UPCOMING</span>
-                      </div>
-                    </div>
-
-                    {/* Node 4 */}
-                    <div className="node-detailed-item planned">
-                      <div className="node-status-check"><span className="bullet-grey"></span></div>
-                      <div className="node-main-info">
-                        <h4 className="node-place-title">30-Min Rest Break</h4>
-                        <span className="node-place-sub">Rest Area #12, Des Moines West</span>
-                      </div>
-                      <div className="node-time-info">
-                        <span className="node-time-val">02:30 PM</span>
-                        <span className="node-time-status">PLANNED</span>
-                      </div>
-                    </div>
-
-                    {/* Node 5 */}
-                    <div className="node-detailed-item planned">
-                      <div className="node-status-check"><span className="bullet-grey"></span></div>
-                      <div className="node-main-info">
-                        <h4 className="node-place-title">10-Hr Reset: Pilot Flying J</h4>
-                        <span className="node-place-sub">Omaha Northwest, NE</span>
-                      </div>
-                      <div className="node-time-info">
-                        <span className="node-time-val">06:00 PM</span>
-                        <span className="node-time-status">PLANNED</span>
-                      </div>
-                    </div>
-
-                    {/* Node 6 */}
-                    <div className="node-detailed-item last-node">
-                      <div className="node-status-check"><FiMapPin /></div>
-                      <div className="node-main-info">
-                        <h4 className="node-place-title">Dropoff: Global Cold Storage</h4>
-                        <span className="node-place-sub">8800 Aurora Ave, Denver CO</span>
-                      </div>
-                      <div className="node-time-info">
-                        <span className="node-time-val">04:30 PM</span>
-                        <span className="node-time-status">OCT 24</span>
-                      </div>
-                    </div>
-                  </>
+                  <div className="no-timeline-data-message" style={{ padding: '24px', textAlign: 'center', color: '#8c7365', fontFamily: 'Inter, sans-serif', fontSize: '0.85rem', border: '1px dashed #2b201a', borderRadius: '8px' }}>
+                    No active route dispatch loaded. Please configure and optimize a route on the <a href="#plan-trip" onClick={(e) => { e.preventDefault(); onTabChange('plan-trip'); }} style={{ color: '#ff6b00', textDecoration: 'none', fontWeight: 'bold' }}>Trip Planner</a> page first.
+                  </div>
                 )}
               </div>
             </div>
