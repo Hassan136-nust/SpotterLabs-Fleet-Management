@@ -40,7 +40,12 @@ const Homepage = ({ onTabChange }) => {
       {/* Main Container */}
       <div className="homepage-hero-wrapper">
         {/* Full BG Hero Section */}
-        <section className="hero-section-full-bg" style={{ backgroundImage: "url('/unnamed (1).jpg')" }}>
+        <section className="hero-section-full-bg">
+          {/* Looping Background Video */}
+          <video autoPlay loop muted playsInline className="hero-bg-video">
+            <source src="/The_truck_is_not_shown_fully_m.mp4" type="video/mp4" />
+          </video>
+
           {/* Dark Overlay */}
           <div className="hero-overlay-dark"></div>
 
