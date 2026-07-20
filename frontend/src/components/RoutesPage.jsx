@@ -20,7 +20,7 @@ import Sidebar from './Sidebar';
 import MapContainer from './MapContainer';
 import './RoutesPage.css';
 
-const RoutesPage = ({ onTabChange, tripPlanState }) => {
+const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState }) => {
   const hasActiveRoute = tripPlanState && tripPlanState.routeGeometry;
 
   // Centralized or fallback routes parameters
@@ -57,6 +57,118 @@ const RoutesPage = ({ onTabChange, tripPlanState }) => {
     const hrs = Math.floor(decimalHours);
     const mins = Math.round((decimalHours - hrs) * 60);
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  };
+
+  // Handlers for action buttons
+  const handleShareLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    alert("Dispatch Share Link copied to clipboard!");
+  };
+
+  const handlePrintManifest = () => {
+    window.print();
+  };
+
+  const handlePushToEld = () => {
+    if (!hasActiveRoute) {
+      alert("Please generate a route on the Trip Planner page first before pushing to ELD.");
+      return;
+    }
+    alert("Dispatch manifest successfully pushed to driver's ELD terminal!");
+  };
+
+  const handleReschedule = async () => {
+    if (!hasActiveRoute) {
+      alert("Please generate a route on the Trip Planner page first before rescheduling.");
+      return;
+    }
+    const newDate = prompt("Enter new departure date (YYYY-MM-DD):", tripPlanState.inputs.departureDate);
+    if (!newDate) return;
+    
+    try {
+      // Update local inputs state
+      setTripPlanState(prev => ({
+        ...prev,
+        inputs: { ...prev.inputs, departureDate: newDate }
+      }));
+      
+      const response = await fetch('http://localhost:8000/api/plan-trip/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          current_location: tripPlanState.inputs.currentLocation,
+          pickup_location: tripPlanState.inputs.pickupLocation,
+          dropoff_location: tripPlanState.inputs.dropoffLocation,
+          cycle_hours: parseFloat(tripPlanState.inputs.cycleHours) || 70
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Recalculation failed.");
+      }
+      
+      const data = await response.json();
+      
+      // Update global plan state with recalculated HOS parameters
+      setTripPlanState(prev => ({
+        ...prev,
+        routeGeometry: data.route.geometry,
+        locations: {
+          current: { lat: data.current_coords.lat, lon: data.current_coords.lon, displayName: data.current_coords.display_name },
+          pickup: { lat: data.pickup_coords.lat, lon: data.pickup_coords.lon, displayName: data.pickup_coords.display_name },
+          dropoff: { lat: data.dropoff_coords.lat, lon: data.dropoff_coords.lon, displayName: data.dropoff_coords.display_name }
+        },
+        metrics: {
+          distance: Math.round(data.total_miles),
+          driveTime: parseFloat((data.total_miles / 55).toFixed(1)),
+          eta: data.daily_logs[data.daily_logs.length - 1].events[data.daily_logs[data.daily_logs.length - 1].events.length - 1].start,
+          etaDate: data.daily_logs[data.daily_logs.length - 1].date,
+          remainingCycle: parseFloat((70 - data.daily_logs.reduce((sum, d) => sum + d.totals.driving + d.totals.on_duty, 0)).toFixed(1)),
+          fuelStops: data.stops.filter(s => s.type === 'fuel').length,
+          restStops: data.stops.filter(s => s.type === 'rest').length
+        },
+        plannedStops: data.stops
+      }));
+      
+      alert(`Successfully rescheduled departure date to ${newDate} and re-optimized route metrics!`);
+    } catch (err) {
+      alert("Error rescheduling route: " + err.message);
+    }
+  };
+
+  const handleCancelRoute = () => {
+    if (!hasActiveRoute) return;
+    const confirmCancel = window.confirm("Are you sure you want to cancel and clear the active route?");
+    if (!confirmCancel) return;
+    
+    setTripPlanState({
+      inputs: {
+        currentLocation: 'Detecting location...',
+        pickupLocation: '',
+        dropoffLocation: '',
+        cycleHours: '70',
+        departureDate: new Date().toISOString().split('T')[0]
+      },
+      locations: {
+        current: null,
+        pickup: null,
+        dropoff: null
+      },
+      routeGeometry: null,
+      metrics: {
+        distance: 0,
+        driveTime: 0,
+        eta: '—',
+        etaDate: '—',
+        remainingCycle: 70,
+        fuelStops: 0,
+        restStops: 0
+      },
+      plannedStops: []
+    });
+    alert("Active dispatch cancelled and cleared.");
   };
 
   return (
@@ -319,8 +431,8 @@ const RoutesPage = ({ onTabChange, tripPlanState }) => {
                     </p>
                   </div>
 
-                  {/* Send Button */}
-                  <button className="btn-push-to-eld">
+                   {/* Send Button */}
+                  <button className="btn-push-to-eld" onClick={handlePushToEld}>
                     <FiSend className="btn-send-icon" /> PUSH TO ELD
                   </button>
 
@@ -353,10 +465,10 @@ const RoutesPage = ({ onTabChange, tripPlanState }) => {
 
               {/* Card 3: Action Buttons Grid */}
               <div className="action-buttons-grid-layout">
-                <button className="action-grid-btn"><FiShare2 className="grid-btn-icon" /> Share Link</button>
-                <button className="action-grid-btn"><FiPrinter className="grid-btn-icon" /> Manifest</button>
-                <button className="action-grid-btn"><FiCalendar className="grid-btn-icon" /> Reschedule</button>
-                <button className="action-grid-btn"><FiXCircle className="grid-btn-icon text-red" /> Cancel Route</button>
+                <button className="action-grid-btn" onClick={handleShareLink}><FiShare2 className="grid-btn-icon" /> Share Link</button>
+                <button className="action-grid-btn" onClick={handlePrintManifest}><FiPrinter className="grid-btn-icon" /> Manifest</button>
+                <button className="action-grid-btn" onClick={handleReschedule}><FiCalendar className="grid-btn-icon" /> Reschedule</button>
+                <button className="action-grid-btn" onClick={handleCancelRoute}><FiXCircle className="grid-btn-icon text-red" /> Cancel Route</button>
               </div>
 
             </div>

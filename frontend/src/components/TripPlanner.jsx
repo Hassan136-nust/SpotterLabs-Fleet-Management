@@ -462,13 +462,13 @@ const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState
               <div className="metric-col">
                 <span className="metric-lbl">DISTANCE</span>
                 <span className="metric-val">{metrics.distance} mi</span>
-                <span className="metric-sub-lbl text-green">● OPTIMIZED</span>
+                <span className="metric-sub-lbl text-green">{metrics.distance > 0 ? '● OPTIMIZED' : '—'}</span>
               </div>
               <div className="metric-col">
                 <span className="metric-lbl">ESTIMATED DRIVE TIME</span>
                 <span className="metric-val">{metrics.driveTime} hrs</span>
                 <div className="metric-progress-track">
-                  <div className="metric-progress-fill" style={{ width: '40%' }}></div>
+                  <div className="metric-progress-fill" style={{ width: `${metrics.driveTime > 0 ? Math.min((metrics.driveTime / 70) * 100, 100) : 0}%` }}></div>
                 </div>
               </div>
               <div className="metric-col">
@@ -479,23 +479,29 @@ const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState
               <div className="metric-col">
                 <span className="metric-lbl">REMAINING CYCLE</span>
                 <span className="metric-val">{metrics.remainingCycle} hrs</span>
-                <span className="metric-sub-lbl text-red">RESET IN 3D 4H</span>
+                <span className="metric-sub-lbl text-red">
+                  {metrics.distance > 0 ? (
+                    plannedStops.some(s => s.type === 'rest' && s.duration_hrs === 34.0) ? '34H RESTART SCHED.' : 
+                    plannedStops.some(s => s.type === 'rest') ? '10H RESET SCHED.' : 'NO RESET REQUIRED'
+                  ) : '—'}
+                </span>
               </div>
               <div className="metric-col">
                 <span className="metric-lbl">FUEL STOPS</span>
                 <span className="metric-val">{metrics.fuelStops.toString().padStart(2, '0')}</span>
                 <div className="indicator-dashes">
-                  <span className="dash active"></span>
-                  <span className="dash active"></span>
-                  <span className="dash"></span>
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className={`dash ${i < metrics.fuelStops ? 'active' : ''}`}></span>
+                  ))}
                 </div>
               </div>
               <div className="metric-col">
                 <span className="metric-lbl">REST STOPS</span>
                 <span className="metric-val">{metrics.restStops.toString().padStart(2, '0')}</span>
                 <div className="indicator-dashes">
-                  <span className="dash active"></span>
-                  <span className="dash"></span>
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className={`dash ${i < metrics.restStops ? 'active' : ''}`}></span>
+                  ))}
                 </div>
               </div>
             </div>

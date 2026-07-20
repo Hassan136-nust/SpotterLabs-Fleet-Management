@@ -68,6 +68,7 @@ function App() {
           <RoutesPage 
             onTabChange={handleTabChange} 
             tripPlanState={tripPlanState}
+            setTripPlanState={setTripPlanState}
           />
         );
         
