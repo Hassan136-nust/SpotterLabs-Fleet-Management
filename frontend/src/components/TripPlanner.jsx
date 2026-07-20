@@ -45,73 +45,87 @@ const TripPlanner = ({ onTabChange, onEldSolved }) => {
     restStops: 1
   });
 
-  // Calculate route and HOS metrics
+  // Calculate route and HOS metrics using Django backend
   const handleCalculateRoute = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const currentCoords = await geocodeAddress(inputs.currentLocation);
-      const pickupCoords = await geocodeAddress(inputs.pickupLocation);
-      const dropoffCoords = await geocodeAddress(inputs.dropoffLocation);
+      const response = await fetch('http://localhost:8000/api/plan-trip/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          current_location: inputs.currentLocation,
+          pickup_location: inputs.pickupLocation,
+          dropoff_location: inputs.dropoffLocation,
+          current_cycle_used: 70 - parseFloat(inputs.cycleHours)
+        })
+      });
 
-      if (!currentCoords || !pickupCoords || !dropoffCoords) {
-        throw new Error('Addresses could not be geocoded. Please verify address spelling.');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to communicate with Django HOS backend API.');
       }
+
+      const data = await response.json();
+
+      // Find pickup and dropoff stop coordinates from stops
+      const pickupStop = data.stops.find(s => s.type === 'pickup');
+      const dropoffStop = data.stops.find(s => s.type === 'dropoff');
+      
+      // Get first and last coordinates of route path for pinning
+      const coordsList = data.route_geometry.coordinates;
+      const startCoord = coordsList[0];
 
       setLocations({
-        current: currentCoords,
-        pickup: pickupCoords,
-        dropoff: dropoffCoords
+        current: { lat: startCoord[1], lon: startCoord[0], displayName: inputs.currentLocation },
+        pickup: { lat: pickupStop.lat, lon: pickupStop.lng, displayName: inputs.pickupLocation },
+        dropoff: { lat: dropoffStop.lat, lon: dropoffStop.lng, displayName: inputs.dropoffLocation }
       });
 
-      // Calculate route legs
-      const leg1 = await getRoute([[currentCoords.lat, currentCoords.lon], [pickupCoords.lat, pickupCoords.lon]]);
-      const leg2 = await getRoute([[pickupCoords.lat, pickupCoords.lon], [dropoffCoords.lat, dropoffCoords.lon]]);
+      // Update Leaflet Route Polyline
+      setRouteGeometry(data.route_geometry);
 
-      if (!leg1 || !leg2) {
-        throw new Error('Failed to resolve route paths between locations.');
-      }
+      // Sum driving duration
+      const totalDriveHrs = data.legs.reduce((acc, leg) => acc + leg.drive_hours, 0);
 
-      // Combine geometry
-      setRouteGeometry({
-        type: 'LineString',
-        coordinates: [
-          ...leg1.geometry.coordinates,
-          ...leg2.geometry.coordinates
-        ]
-      });
+      // Find end date and eta time from logs
+      const finalDay = data.daily_logs[data.daily_logs.length - 1];
+      const finalEvent = finalDay.events[finalDay.events.length - 1];
 
-      // Solve HOS / ELD
-      const eld = solveELDLogs({
-        currentCycleUsed: 70 - parseFloat(inputs.cycleHours),
-        leg1Distance: leg1.distanceMeters,
-        leg1Duration: leg1.durationSeconds,
-        leg2Distance: leg2.distanceMeters,
-        leg2Duration: leg2.durationSeconds,
-        startTime: new Date(inputs.departureDate + 'T08:00:00')
-      });
-
-      if (onEldSolved) {
-        onEldSolved(eld);
-      }
-
-      // Map metrics from solver
-      const totalDistMiles = eld.totalDistanceMiles;
-      const totalDurationHrs = eld.totalDurationMin / 60;
-      
-      const etaDateTime = new Date(new Date(inputs.departureDate + 'T08:00:00').getTime() + eld.totalDurationMin * 60 * 1000);
-      
+      // Map metrics from backend
       setMetrics({
-        distance: Math.round(totalDistMiles),
-        driveTime: parseFloat(totalDurationHrs.toFixed(1)),
-        eta: etaDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        etaDate: etaDateTime.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase(),
-        remainingCycle: parseFloat((parseFloat(inputs.cycleHours) - (eld.totalDurationMin / 60)).toFixed(1)),
-        fuelStops: Math.floor(totalDistMiles / 1000) || 1,
-        restStops: Math.ceil(totalDurationHrs / 8) - 1 || 1
+        distance: Math.round(data.total_miles),
+        driveTime: parseFloat(totalDriveHrs.toFixed(1)),
+        eta: finalEvent ? finalEvent.start : '06:00 PM',
+        etaDate: finalDay.date.toUpperCase(),
+        remainingCycle: parseFloat((parseFloat(inputs.cycleHours) - data.daily_logs.reduce((acc, day) => acc + day.totals.on_duty + day.totals.driving, 0)).toFixed(1)),
+        fuelStops: data.stops.filter(s => s.type === 'fuel').length,
+        restStops: data.stops.filter(s => s.type === 'rest').length
       });
+
+      // Pass HOS result to App.jsx to synchronize the ELD Logs tab
+      if (onEldSolved) {
+        onEldSolved({
+          dailyLogs: data.daily_logs.map(day => ({
+            dayNumber: day.day,
+            dateString: day.date,
+            totals: {
+              D: day.totals.driving,
+              ON: day.totals.on_duty,
+              OFF: day.totals.off_duty,
+              SB: day.totals.sleeper
+            },
+            intervals: day.events.map(ev => ({
+              status: ev.status,
+              durationMin: Math.round(ev.hours * 60)
+            }))
+          }))
+        });
+      }
 
     } catch (err) {
       setError(err.message);
