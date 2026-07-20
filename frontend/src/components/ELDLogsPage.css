@@ -558,3 +558,128 @@
 .floating-action-button-table:active {
   transform: scale(0.95);
 }
+
+/* FMCSA Compliance styling rules */
+.fmcsa-header-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background-color: #2b201a;
+  border: 1.5px solid #2b201a;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .fmcsa-header-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.fmcsa-header-cell {
+  background-color: #120c09;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fmcsa-header-cell.cell-sig {
+  grid-column: span 2;
+}
+
+@media (max-width: 768px) {
+  .fmcsa-header-cell.cell-sig {
+    grid-column: span 1;
+  }
+}
+
+.fmcsa-header-cell .cell-lbl {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #8c7365;
+  letter-spacing: 0.05em;
+}
+
+.fmcsa-header-cell .cell-val {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.signature-text {
+  font-family: 'Dancing Script', 'Brush Script MT', cursive;
+  font-size: 1rem !important;
+  color: #ff6b00 !important;
+}
+
+.eld-canvas-layout-container {
+  display: flex;
+  width: 100%;
+  gap: 16px;
+  position: relative;
+  background-color: #120c09;
+  border: 1px solid #2b201a;
+  border-radius: 12px;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+
+.eld-totals-column-layout {
+  display: flex;
+  flex-direction: column;
+  width: 60px;
+  flex-shrink: 0;
+  border-left: 1px solid #2b201a;
+  padding-left: 16px;
+  position: relative;
+  height: 160px;
+}
+
+.totals-header-cell {
+  font-size: 0.625rem;
+  font-weight: 800;
+  color: #8c7365;
+  text-align: center;
+  position: absolute;
+  top: -12px;
+  left: 16px;
+  right: 0;
+}
+
+.totals-val-row {
+  position: absolute;
+  left: 16px;
+  right: 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.totals-footer-cell {
+  position: absolute;
+  bottom: -12px;
+  left: 16px;
+  right: 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: #ff6b00;
+  border-top: 1px solid #2b201a;
+  padding-top: 4px;
+}
+
+.status-label-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.clock-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+

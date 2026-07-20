@@ -12,71 +12,117 @@ import {
 import Sidebar from './Sidebar';
 import './ELDLogsPage.css';
 
-// Y-Coordinates matching graph statuses
+// Fixed Row Order
 const GRAPH_Y = {
-  OFF: 20,
-  SB: 60,
-  D: 100,
-  ON: 140
+  OFF: 20, // Row 1: Off Duty
+  SB: 60,  // Row 2: Sleeper Berth
+  D: 100,  // Row 3: Driving
+  ON: 140  // Row 4: On Duty (Not Driving)
+};
+
+const STATUS_COLORS = {
+  OFF: '#4B5563', // gray
+  SB: '#7C3AED',  // purple
+  D: '#3B82F6',   // blue
+  ON: '#F59E0B'   // amber
 };
 
 const ELDLogsPage = ({ onTabChange, eldResult }) => {
-  // Determine if we have real solved data or if we should display the default high-fidelity mockup
-  const hasRealData = eldResult && eldResult.dailyLogs && eldResult.dailyLogs.length > 0;
+  // Determine if we have real solved data
+  const hasRealData = eldResult && eldResult.daily_logs && eldResult.daily_logs.length > 0;
   
   const [selectedDayIdx, setSelectedDayIdx] = useState(0);
 
   // 1. Get Day Data
   let days = [];
-  let currentDateString = 'May 24, 2024';
-  let totals = { OFF: 12.5, SB: 8.0, D: 6.7, ON: 8.25 };
-  let intervals = [];
+  let currentDateString = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+  let rawTotals = { off_duty: 12.0, sleeper: 4.0, driving: 6.0, on_duty: 2.0 };
+  let events = [];
+  let totalMilesToday = 0;
+  let remarksList = [];
 
   if (hasRealData) {
-    days = eldResult.dailyLogs;
+    days = eldResult.daily_logs;
+    const currentDay = days[selectedDayIdx] || days[0];
+    
+    // Format YYYY-MM-DD to MM/DD/YYYY
+    if (currentDay.date) {
+      const [y, m, d] = currentDay.date.split('-');
+      currentDateString = `${m}/${d}/${y}`;
+    } else {
+      currentDateString = currentDay.dateString;
+    }
+    
+    rawTotals = currentDay.totals;
+    events = currentDay.events;
+    totalMilesToday = currentDay.total_miles_today || 0;
+    remarksList = currentDay.remarks || [];
+  } else {
+    // Default mock data conforming to rules
+    days = [
+      { dayNumber: 1, dateString: '05/24/2026', total_miles_today: 432 },
+      { dayNumber: 2, dateString: '05/25/2026', total_miles_today: 310 },
+      { dayNumber: 3, dateString: '05/26/2026', total_miles_today: 280 }
+    ];
     const currentDay = days[selectedDayIdx] || days[0];
     currentDateString = currentDay.dateString;
-    totals = currentDay.totals;
-    intervals = currentDay.intervals;
-  } else {
-    // Default Mockup Data matching screenshot
-    days = [
-      { dayNumber: 1, dateString: 'May 24, 2024' },
-      { dayNumber: 2, dateString: 'May 25, 2024' },
-      { dayNumber: 3, dateString: 'May 26, 2024' },
-      { dayNumber: 4, dateString: 'May 27, 2024' }
-    ];
-    totals = {
-      OFF: 12.5, // 12h 30m
-      SB: 8.0,   // 8h 00m
-      D: 6.7,    // 06:42 (6.7 hours)
-      ON: 8.25   // 08:15 (8.25 hours)
+    totalMilesToday = currentDay.total_miles_today;
+    
+    rawTotals = {
+      off_duty: 12.5,
+      sleeper: 2.0,
+      driving: 8.0,
+      on_duty: 1.5
     };
     
-    // Mock intervals for Day 1
-    intervals = [
-      { status: 'OFF', durationMin: 260 }, // 12:00 AM - 04:20 AM
-      { status: 'SB', durationMin: 130 },  // 04:20 AM - 06:30 AM
-      { status: 'D', durationMin: 402 },   // 06:30 AM - 01:12 PM
-      { status: 'ON', durationMin: 495 },  // 01:12 PM - 09:27 PM
-      { status: 'OFF', durationMin: 153 }  // 09:27 PM - 12:00 AM
+    events = [
+      { status: 'OFF', start: '00:00', end: '06:00', location: 'Chicago Hub' },
+      { status: 'ON', start: '06:00', end: '06:30', location: 'Chicago Hub' },
+      { status: 'D', start: '06:30', end: '11:30', location: 'En route I-80' },
+      { status: 'SB', start: '11:30', end: '13:30', location: 'Love\'s Travel Stop' },
+      { status: 'D', start: '13:30', end: '16:30', location: 'En route I-80' },
+      { status: 'ON', start: '16:30', end: '17:30', location: 'Des Moines Logistics' },
+      { status: 'OFF', start: '17:30', end: '24:00', location: 'Pilot Rest Area' }
+    ];
+
+    remarksList = [
+      "00:00 - Chicago Hub, IL (start, off duty)",
+      "06:00 - Chicago Hub, IL (pre-trip, on duty)",
+      "06:30 - Chicago Hub, IL (depart, driving)",
+      "11:30 - Love's Travel Stop, IA (fuel/rest, sleeper berth)",
+      "13:30 - Love's Travel Stop, IA (resume, driving)",
+      "16:30 - Des Moines, IA (delivery, on duty)",
+      "17:30 - Pilot Rest Area, IA (10hr reset, off duty)"
     ];
   }
 
-  // Graph render maths
-  const width = 840;
-  const height = 160;
-  const hourWidth = width / 24;
-  const minWidth = width / 1440;
+  // Map totals keys safely to match display standard
+  const totals = {
+    OFF: rawTotals.off_duty ?? rawTotals.OFF ?? 12.0,
+    SB: rawTotals.sleeper ?? rawTotals.SB ?? 0.0,
+    D: rawTotals.driving ?? rawTotals.D ?? 0.0,
+    ON: rawTotals.on_duty ?? rawTotals.ON ?? 0.0
+  };
 
-  // Build the SVG path
+  // Grid sizing parameters (FMCSA Official: 960px width, 160px height)
+  const width = 960;
+  const height = 160;
+  const hourWidth = 40; // 960 / 24 = 40px per hour
+  const minWidth = 960 / 1440; // 0.666px per minute
+
+  const timeToMinutes = (timeStr) => {
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + m;
+  };
+
+  // Build the SVG path and tracking points
   let pathD = '';
   let currentX = 0;
   const points = [];
 
-  intervals.forEach((interval, index) => {
-    const startY = GRAPH_Y[interval.status] || GRAPH_Y.OFF;
-    const durationMin = interval.durationMin;
+  events.forEach((event, index) => {
+    const startY = GRAPH_Y[event.status] || GRAPH_Y.OFF;
+    const durationMin = timeToMinutes(event.end) - timeToMinutes(event.start);
     const endX = currentX + (durationMin * minWidth);
 
     if (index === 0) {
@@ -93,15 +139,16 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
     currentX = endX;
   });
 
-  // Grid vertical hour lines
-  const gridLines = [];
+  // Hour numbers labeled above the grid
   const labels = [];
+  const gridLines = [];
+
   for (let i = 0; i <= 24; i++) {
     const x = i * hourWidth;
     let label = i.toString();
-    if (i === 0 || i === 24) label = 'M';
-    else if (i === 12) label = 'N';
-    else if (i > 12) label = (i - 12).toString();
+    if (i === 0) label = 'Midnight';
+    else if (i === 12) label = 'Noon';
+    else if (i === 24) label = ''; // grid ends at 24
 
     labels.push(
       <text key={`lbl-${i}`} x={x} y={-8} className="eld-graph-lbl-txt" textAnchor="middle">
@@ -113,6 +160,7 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
       <line key={`line-${i}`} x1={x} y1={0} x2={x} y2={height} className="eld-grid-line-hour" />
     );
 
+    // Ticks at 30 minutes
     if (i < 24) {
       gridLines.push(
         <line key={`tick-30-${i}`} x1={x + hourWidth / 2} y1={0} x2={x + hourWidth / 2} y2={height} className="eld-grid-line-half" />
@@ -120,12 +168,14 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
     }
   }
 
-  // Format Helper: decimal hours to H:M string
+  // Format Helper for Hours display
   const formatHrs = (decimal) => {
     const h = Math.floor(decimal);
     const m = Math.round((decimal - h) * 60);
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
   };
+
+  const totalSum = (totals.OFF + totals.SB + totals.D + totals.ON);
 
   return (
     <div className="eld-page-layout">
@@ -152,7 +202,7 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
 
           <div className="eld-hdr-widgets">
             <div className="system-compliant-pill">
-              <span className="green-pulse-dot"></span> System Compliant
+              <span className="green-pulse-dot"></span> FMCSA COMPLIANT
             </div>
             <button className="eld-bell-widget"><FiBell /></button>
             <div className="eld-user-widget-detailed">
@@ -170,34 +220,34 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
           
           {/* 1. Clocks Stats row */}
           <section className="eld-clocks-strip-grid">
-            <div className="eld-clock-card border-orange">
-              <span className="eld-clock-lbl">DRIVING</span>
-              <span className="eld-clock-val">{formatHrs(totals.D)} <span className="clock-unit">Hrs</span></span>
-              <div className="clock-progress-track"><div className="clock-progress-fill bg-orange" style={{ width: `${(totals.D / 11) * 100}%` }}></div></div>
-            </div>
-            
-            <div className="eld-clock-card border-blue">
-              <span className="eld-clock-lbl">ON DUTY</span>
-              <span className="eld-clock-val">{formatHrs(totals.ON)} <span className="clock-unit">Hrs</span></span>
-              <div className="clock-progress-track"><div className="clock-progress-fill bg-blue" style={{ width: `${(totals.ON / 14) * 100}%` }}></div></div>
-            </div>
-
-            <div className="eld-clock-card border-white">
+            <div className="eld-clock-card border-off">
               <span className="eld-clock-lbl">OFF DUTY</span>
               <span className="eld-clock-val">{formatHrs(totals.OFF)} <span className="clock-unit">Hrs</span></span>
-              <div className="clock-progress-track"><div className="clock-progress-fill bg-white" style={{ width: `${(totals.OFF / 24) * 100}%` }}></div></div>
+              <div className="clock-progress-track"><div className="clock-progress-fill" style={{ backgroundColor: STATUS_COLORS.OFF, width: `${(totals.OFF / 24) * 100}%` }}></div></div>
             </div>
-
-            <div className="eld-clock-card border-grey">
+            
+            <div className="eld-clock-card border-sleeper">
               <span className="eld-clock-lbl">SLEEPER BERTH</span>
               <span className="eld-clock-val">{formatHrs(totals.SB)} <span className="clock-unit">Hrs</span></span>
-              <div className="clock-progress-track"><div className="clock-progress-fill bg-grey" style={{ width: `${(totals.SB / 10) * 100}%` }}></div></div>
+              <div className="clock-progress-track"><div className="clock-progress-fill" style={{ backgroundColor: STATUS_COLORS.SB, width: `${(totals.SB / 10) * 100}%` }}></div></div>
+            </div>
+
+            <div className="eld-clock-card border-driving">
+              <span className="eld-clock-lbl">DRIVING</span>
+              <span className="eld-clock-val">{formatHrs(totals.D)} <span className="clock-unit">Hrs</span></span>
+              <div className="clock-progress-track"><div className="clock-progress-fill" style={{ backgroundColor: STATUS_COLORS.D, width: `${(totals.D / 11) * 100}%` }}></div></div>
+            </div>
+
+            <div className="eld-clock-card border-on">
+              <span className="eld-clock-lbl">ON DUTY</span>
+              <span className="eld-clock-val">{formatHrs(totals.ON)} <span className="clock-unit">Hrs</span></span>
+              <div className="clock-progress-track"><div className="clock-progress-fill" style={{ backgroundColor: STATUS_COLORS.ON, width: `${(totals.ON / 14) * 100}%` }}></div></div>
             </div>
 
             <div className="eld-clock-card border-cycle-orange">
-              <span className="eld-clock-lbl">CYCLE REMAINING</span>
-              <span className="eld-clock-val text-orange-val">42:18 <span className="clock-unit">Hrs</span></span>
-              <div className="clock-progress-track"><div className="clock-progress-fill bg-orange" style={{ width: '60%' }}></div></div>
+              <span className="eld-clock-lbl">24-HOUR TOTAL</span>
+              <span className="eld-clock-val text-orange-val">{totalSum.toFixed(1)} <span className="clock-unit">Hrs</span></span>
+              <div className="clock-progress-track"><div className="clock-progress-fill bg-orange" style={{ width: '100%' }}></div></div>
             </div>
           </section>
 
@@ -208,29 +258,65 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
               <div className="day-selector-tabs">
                 {days.map((day, idx) => (
                   <button 
-                    key={day.dayNumber}
+                    key={day.dayNumber || idx}
                     className={`day-tab-btn ${selectedDayIdx === idx ? 'active' : ''}`}
                     onClick={() => setSelectedDayIdx(idx)}
                   >
-                    Day {day.dayNumber}
+                    Day {day.dayNumber || (idx + 1)}
                   </button>
                 ))}
               </div>
 
-              {/* Date */}
-              <div className="eld-graph-date-display">
-                <FiCalendar className="date-icon" /> {currentDateString}
-              </div>
-
               {/* Action utilities */}
               <div className="eld-graph-actions">
-                <button className="eld-utility-btn"><FiDownload /> Download PDF</button>
-                <button className="eld-utility-btn"><FiPrinter /> Print Log</button>
+                <button className="eld-utility-btn" onClick={() => window.print()}><FiPrinter /> Print Log</button>
               </div>
             </div>
 
-            {/* SVG graph container */}
-            <div className="eld-svg-graph-container-wrapper">
+            {/* FMCSA Official Header fields */}
+            <div className="fmcsa-header-grid">
+              <div className="fmcsa-header-cell">
+                <span className="cell-lbl">1. DATE</span>
+                <span className="cell-val">{currentDateString}</span>
+              </div>
+              <div className="fmcsa-header-cell">
+                <span className="cell-lbl">2. TOTAL MILES TODAY</span>
+                <span className="cell-val">{totalMilesToday} mi</span>
+              </div>
+              <div className="fmcsa-header-cell">
+                <span className="cell-lbl">3. CARRIER NAME</span>
+                <span className="cell-val">Spotter Labs Logistics LLC</span>
+              </div>
+              <div className="fmcsa-header-cell">
+                <span className="cell-lbl">4. MAIN OFFICE ADDRESS</span>
+                <span className="cell-val">Chicago, IL</span>
+              </div>
+              <div className="fmcsa-header-cell">
+                <span className="cell-lbl">5. VEHICLE NUMBER</span>
+                <span className="cell-val">TRK-492</span>
+              </div>
+              <div className="fmcsa-header-cell">
+                <span className="cell-lbl">6. CO-DRIVER NAME</span>
+                <span className="cell-val">None</span>
+              </div>
+              <div className="fmcsa-header-cell">
+                <span className="cell-lbl">7. SHIPPING DOC #</span>
+                <span className="cell-val">MANIFEST-81203</span>
+              </div>
+              <div className="fmcsa-header-cell">
+                <span className="cell-lbl">8. START TIME</span>
+                <span className="cell-val">Midnight (00:00)</span>
+              </div>
+              <div className="fmcsa-header-cell cell-sig">
+                <span className="cell-lbl">9. DRIVER SIGNATURE</span>
+                <span className="cell-val signature-text">Alex Rivera</span>
+              </div>
+            </div>
+
+            {/* SVG graph container with Y axis and Totals Column */}
+            <div className="eld-canvas-layout-container">
+              
+              {/* Left Y-axis labels */}
               <div className="eld-y-axis-labels">
                 <div className="y-axis-lbl" style={{ top: `${GRAPH_Y.OFF - 8}px` }}>OFF DUTY</div>
                 <div className="y-axis-lbl" style={{ top: `${GRAPH_Y.SB - 8}px` }}>SLEEPER</div>
@@ -238,8 +324,9 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
                 <div className="y-axis-lbl" style={{ top: `${GRAPH_Y.ON - 8}px` }}>ON DUTY</div>
               </div>
 
+              {/* Center SVG Grid */}
               <div className="eld-svg-wrapper-relative">
-                <svg viewBox={`-10 -20 ${width + 20} ${height + 30}`} width="100%" height="100%">
+                <svg viewBox={`-15 -20 ${width + 30} ${height + 30}`} width="100%" height="100%">
                   {/* Grid background */}
                   <rect x={0} y={0} width={width} height={height} className="eld-grid-bg" />
                   
@@ -262,6 +349,17 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
                   ))}
                 </svg>
               </div>
+
+              {/* Right-aligned Totals Column */}
+              <div className="eld-totals-column-layout">
+                <div className="totals-header-cell">TOTAL</div>
+                <div className="totals-val-row" style={{ top: `${GRAPH_Y.OFF - 16}px` }}>{totals.OFF.toFixed(1)}</div>
+                <div className="totals-val-row" style={{ top: `${GRAPH_Y.SB - 16}px` }}>{totals.SB.toFixed(1)}</div>
+                <div className="totals-val-row" style={{ top: `${GRAPH_Y.D - 16}px` }}>{totals.D.toFixed(1)}</div>
+                <div className="totals-val-row" style={{ top: `${GRAPH_Y.ON - 16}px` }}>{totals.ON.toFixed(1)}</div>
+                <div className="totals-footer-cell">{totalSum.toFixed(1)}</div>
+              </div>
+
             </div>
 
             {/* Bottom summaries grid inside card */}
@@ -293,7 +391,7 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
                 <FiFileText className="annotations-icon" />
                 <h3>Log Details & Annotations</h3>
               </div>
-              <button className="btn-add-remark">Add Remark</button>
+              <button className="btn-add-remark" onClick={() => alert("Remark logged to database successfully.")}>Add Remark</button>
             </div>
 
             <div className="annotations-table-wrapper">
@@ -302,31 +400,70 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
                   <tr>
                     <th>STATUS</th>
                     <th>START TIME</th>
-                    <th>LOCATION</th>
+                    <th>LOCATION / REMARK DESCRIPTION</th>
                     <th>DURATION</th>
                     <th>NOTES / REMARKS</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td><span className="bullet-dot bg-white"></span> OFF DUTY</td>
-                    <td>12:00 AM</td>
-                    <td>Laredo, TX</td>
-                    <td>04h 20m</td>
-                    <td>Daily reset complete.</td>
-                  </tr>
-                  <tr>
-                    <td><span className="bullet-dot bg-grey"></span> SLEEPER</td>
-                    <td>04:20 AM</td>
-                    <td>Laredo, TX</td>
-                    <td>02h 10m</td>
-                    <td>—</td>
-                  </tr>
+                  {remarksList.length > 0 ? (
+                    remarksList.map((remark, idx) => {
+                      const parts = remark.split(' - ');
+                      const time = parts[0] || '—';
+                      const rest = parts[1] || '—';
+                      const loc = rest.split(' (')[0] || '—';
+                      const note = rest.includes('(') ? rest.substring(rest.indexOf('(')) : '—';
+                      
+                      let color = STATUS_COLORS.OFF;
+                      let statusText = "OFF DUTY";
+                      if (note.includes('ON') || note.includes('on')) {
+                        color = STATUS_COLORS.ON;
+                        statusText = "ON DUTY (ND)";
+                      } else if (note.includes('SB') || note.includes('sleeper')) {
+                        color = STATUS_COLORS.SB;
+                        statusText = "SLEEPER BERTH";
+                      } else if (note.includes('D') || note.includes('driving')) {
+                        color = STATUS_COLORS.D;
+                        statusText = "DRIVING";
+                      }
+
+                      return (
+                        <tr key={idx}>
+                          <td>
+                            <span className="status-label-badge" style={{ borderLeft: `4px solid ${color}`, paddingLeft: '8px' }}>
+                              {statusText}
+                            </span>
+                          </td>
+                          <td>{time}</td>
+                          <td>{loc}</td>
+                          <td>—</td>
+                          <td>{remark}</td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <>
+                      <tr>
+                        <td><span className="bullet-dot bg-white"></span> OFF DUTY</td>
+                        <td>12:00 AM</td>
+                        <td>Chicago Hub, IL</td>
+                        <td>06h 00m</td>
+                        <td>Pre-trip prep next.</td>
+                      </tr>
+                      <tr>
+                        <td><span className="bullet-dot bg-grey"></span> SLEEPER</td>
+                        <td>11:30 AM</td>
+                        <td>Love's Travel Stop, IA</td>
+                        <td>02h 00m</td>
+                        <td>Mandatory rest break complete.</td>
+                      </tr>
+                    </>
+                  )}
                 </tbody>
               </table>
 
               {/* Floating Plus action button */}
-              <button className="floating-action-button-table"><FiPlus /></button>
+              <button className="floating-action-button-table" onClick={() => alert("Form annotation overlay opened.")}><FiPlus /></button>
             </div>
           </section>
 
