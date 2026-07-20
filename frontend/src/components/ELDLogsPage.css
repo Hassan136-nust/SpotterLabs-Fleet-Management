@@ -906,3 +906,83 @@
 .eld-y-axis-labels { display: none !important; }
 .eld-totals-column-layout { display: none !important; }
 
+/* ── Canvas wrapper ── */
+.eld-canvas-wrapper {
+  width: 100%;
+  background-color: #0a0f1a;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  overflow-x: auto;
+  margin-bottom: 8px;
+  padding: 16px 12px 10px;
+  box-sizing: border-box;
+}
+
+/* ── Status legend ── */
+.eld-legend-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 6px 4px 12px;
+}
+
+.eld-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eld-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.eld-legend-lbl {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+/* ── Remarks list above table ── */
+.eld-remarks-list {
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background-color: #0a0f1a;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.eld-remark-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.remark-bullet {
+  color: #ff6b00;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.remark-text {
+  font-size: 0.8125rem;
+  color: #d1d5db;
+  font-family: 'Inter', monospace;
+  line-height: 1.5;
+}
+
+/* ── Mono table cells ── */
+.annotations-table .mono {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.8125rem;
+  color: #e5e7eb;
+  letter-spacing: 0.03em;
+}
+
+
