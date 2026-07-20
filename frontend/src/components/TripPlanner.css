@@ -97,7 +97,7 @@
 /* Form Panel */
 .planner-form-panel {
   width: 380px;
-  background-color: #150f0c;
+  background-color: #120c0a;
   border-right: 1px solid #2b201a;
   padding: 24px;
   display: flex;
@@ -149,11 +149,18 @@
 .planner-input-wrapper {
   display: flex;
   align-items: center;
-  background-color: #1a120e;
+  background-color: #1c130f;
   border: 1px solid #2b201a;
-  border-radius: 6px;
-  padding: 8px 12px;
+  border-radius: 8px;
+  padding: 10px 14px;
   gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.planner-input-wrapper:focus-within {
+  border-color: #ff6b00;
+  box-shadow: 0 0 10px rgba(255, 107, 0, 0.2);
+  background-color: #241813;
 }
 
 .planner-input-wrapper input {
@@ -373,13 +380,14 @@
   left: 0;
   right: 0;
   z-index: 100;
-  background-color: rgba(21, 15, 12, 0.95);
-  border-top: 1.5px solid #2b201a;
+  background-color: rgba(18, 12, 9, 0.85);
+  border-top: 1.5px solid rgba(255, 107, 0, 0.15);
   padding: 16px 24px;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 16px;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
 }
 
 @media (max-width: 1024px) {

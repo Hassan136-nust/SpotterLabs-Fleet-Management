@@ -34,8 +34,8 @@ const MapContainer = ({ currentLoc, pickupLoc, dropoffLoc, routeGeometry }) => {
       zoomControl: true
     });
 
-    // Add Free OpenStreetMap Tile Layer
-    L.tileLayer('https://{s}.tile.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // Add Free CartoDB Dark Matter Tile Layer
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: 'abcd',
       maxZoom: 20
@@ -61,29 +61,39 @@ const MapContainer = ({ currentLoc, pickupLoc, dropoffLoc, routeGeometry }) => {
     layersRef.current.markers = [];
     
     if (layersRef.current.route) {
-      layersRef.current.route.remove();
+      if (Array.isArray(layersRef.current.route)) {
+        layersRef.current.route.forEach(r => r.remove());
+      } else {
+        layersRef.current.route.remove();
+      }
       layersRef.current.route = null;
     }
 
     const bounds = [];
 
-    // Helper to create premium circular markers
-    const createCustomMarker = (latlng, color, label, title) => {
-      const marker = L.circleMarker(latlng, {
-        radius: 10,
-        fillColor: color,
-        color: '#ffffff',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.8
-      }).addTo(map);
+    // Helper to create glowing HTML markers
+    const createCustomMarker = (latlng, color, label, title, initial) => {
+      const customIcon = L.divIcon({
+        className: 'custom-leaflet-marker-wrap',
+        html: `
+          <div class="custom-map-marker-pulse" style="border-color: ${color}; box-shadow: 0 0 10px ${color};">
+            <div class="custom-map-marker-dot" style="background-color: ${color};"></div>
+          </div>
+        `,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+
+      const marker = L.marker(latlng, { icon: customIcon }).addTo(map);
 
       marker.bindPopup(`
-        <div style="font-family: 'Inter', sans-serif; color: #1e293b; padding: 4px;">
-          <strong style="text-transform: uppercase; font-size: 10px; color: ${color}; letter-spacing: 0.05em;">${title}</strong>
-          <div style="font-weight: 600; font-size: 13px; margin-top: 2px;">${label}</div>
+        <div style="font-family: 'Inter', sans-serif; color: #ffffff; background-color: #150f0c; border: 1px solid #2b201a; padding: 10px 14px; border-radius: 8px; box-shadow: 0 6px 12px rgba(0,0,0,0.5);">
+          <strong style="text-transform: uppercase; font-size: 9px; color: ${color}; letter-spacing: 0.08em; display: block; margin-bottom: 2px;">${title}</strong>
+          <div style="font-weight: 700; font-size: 13px; color: #ffffff;">${label}</div>
         </div>
-      `);
+      `, {
+        className: 'custom-map-popup'
+      });
 
       layersRef.current.markers.push(marker);
       bounds.push(latlng);
@@ -92,39 +102,45 @@ const MapContainer = ({ currentLoc, pickupLoc, dropoffLoc, routeGeometry }) => {
 
     // Add Current Location
     if (currentLoc) {
-      createCustomMarker([currentLoc.lat, currentLoc.lon], '#6366f1', currentLoc.displayName.split(',')[0], 'Current Location');
+      createCustomMarker([currentLoc.lat, currentLoc.lon], '#ff6b00', currentLoc.displayName, 'START TERMINAL', 'S');
     }
 
     // Add Pickup Location
     if (pickupLoc) {
-      createCustomMarker([pickupLoc.lat, pickupLoc.lon], '#10b981', pickupLoc.displayName.split(',')[0], 'Pickup Point');
+      createCustomMarker([pickupLoc.lat, pickupLoc.lon], '#3b82f6', pickupLoc.displayName, 'PICKUP STOP', 'P');
     }
 
     // Add Dropoff Location
     if (dropoffLoc) {
-      createCustomMarker([dropoffLoc.lat, dropoffLoc.lon], '#ef4444', dropoffLoc.displayName.split(',')[0], 'Dropoff Point');
+      createCustomMarker([dropoffLoc.lat, dropoffLoc.lon], '#10b981', dropoffLoc.displayName, 'DESTINATION DROPOFF', 'D');
     }
 
     // Add Route Polyline
     if (routeGeometry) {
-      // Decode OSRM route geometry (OSRM returns geojson coordinates as [lon, lat])
       const latlngs = routeGeometry.coordinates.map(coord => [coord[1], coord[0]]);
       
-      const polyline = L.polyline(latlngs, {
-        color: '#6366f1',
-        weight: 4,
-        opacity: 0.85,
+      // 1. Semi-transparent background glow layer
+      const glowPolyline = L.polyline(latlngs, {
+        color: '#ff6b00',
+        weight: 8,
+        opacity: 0.25,
         lineCap: 'round',
         lineJoin: 'round'
       }).addTo(map);
 
-      layersRef.current.route = polyline;
+      // 2. High opacity main route layer
+      const mainPolyline = L.polyline(latlngs, {
+        color: '#ff6b00',
+        weight: 3.5,
+        opacity: 0.95,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(map);
+
+      layersRef.current.route = [glowPolyline, mainPolyline];
       
-      // Extend bounds to cover entire route
-      polyline.getBounds();
-      map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+      map.fitBounds(mainPolyline.getBounds(), { padding: [50, 50] });
     } else if (bounds.length > 0) {
-      // If no route, fit bounds to markers
       map.fitBounds(L.latLngBounds(bounds), { maxZoom: 10, padding: [50, 50] });
     }
   }, [currentLoc, pickupLoc, dropoffLoc, routeGeometry]);

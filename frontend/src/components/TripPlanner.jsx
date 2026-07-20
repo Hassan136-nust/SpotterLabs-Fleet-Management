@@ -18,9 +18,9 @@ import './TripPlanner.css';
 
 const TripPlanner = ({ onTabChange, onEldSolved }) => {
   const [inputs, setInputs] = useState({
-    currentLocation: 'Chicago, IL',
-    pickupLocation: 'Des Moines, IA',
-    dropoffLocation: 'Denver, CO',
+    currentLocation: 'Detecting location...',
+    pickupLocation: '',
+    dropoffLocation: '',
     cycleHours: '70',
     departureDate: new Date().toISOString().split('T')[0] // default to today
   });
@@ -36,13 +36,13 @@ const TripPlanner = ({ onTabChange, onEldSolved }) => {
   });
   const [routeGeometry, setRouteGeometry] = useState(null);
   const [metrics, setMetrics] = useState({
-    distance: 842,
-    driveTime: 12.5,
-    eta: '06:45 AM',
-    etaDate: 'OCT 24, 2023',
-    remainingCycle: 57.5,
-    fuelStops: 2,
-    restStops: 1
+    distance: 0,
+    driveTime: 0,
+    eta: '—',
+    etaDate: '—',
+    remainingCycle: 70,
+    fuelStops: 0,
+    restStops: 0
   });
 
   // Autocomplete and Dynamic stops preview
@@ -177,9 +177,9 @@ const TripPlanner = ({ onTabChange, onEldSolved }) => {
     }
   };
 
-  // Run on mount to (1) fetch current location via browser geolocation and (2) trigger initial dispatch
+  // Run on mount to fetch current location via browser geolocation
   useEffect(() => {
-    const initLocationAndRoute = async () => {
+    const initLocation = async () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
@@ -195,28 +195,28 @@ const TripPlanner = ({ onTabChange, onEldSolved }) => {
                   const label = city && state ? `${city}, ${state}` : prop.label || '';
                   if (label) {
                     setInputs(prev => ({ ...prev, currentLocation: label }));
+                    return;
                   }
                 }
               }
+              setInputs(prev => ({ ...prev, currentLocation: '' }));
             } catch (err) {
               console.error("Browser location reverse lookup failed:", err);
-            } finally {
-              // Trigger initial calculation
-              handleCalculateRoute();
+              setInputs(prev => ({ ...prev, currentLocation: '' }));
             }
           },
           (err) => {
-            console.log("Browser geolocation permission denied or timed out. Falling back to Chicago.", err);
-            handleCalculateRoute();
+            console.log("Browser geolocation permission denied or timed out.", err);
+            setInputs(prev => ({ ...prev, currentLocation: '' }));
           },
           { timeout: 8000 }
         );
       } else {
-        handleCalculateRoute();
+        setInputs(prev => ({ ...prev, currentLocation: '' }));
       }
     };
 
-    initLocationAndRoute();
+    initLocation();
   }, []);
 
   return (
