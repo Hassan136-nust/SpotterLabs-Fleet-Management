@@ -31,7 +31,6 @@ const Homepage = ({ onTabChange }) => {
           </div>
 
           <div className="navbar-actions">
-            <a href="#login" className="login-link">Log In</a>
             <button className="navbar-btn-orange" onClick={() => onTabChange('plan-trip')}>Get Started</button>
           </div>
         </div>
@@ -194,9 +193,9 @@ const Homepage = ({ onTabChange }) => {
               <p className="cap-card-desc">
                 Optimize stops based on fuel price data and safe parking availability, ensuring drivers rest where it's best for business.
               </p>
-              <a href="#network" className="explore-network-link">
+              <button onClick={() => onTabChange('routes')} className="explore-network-link" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', marginTop: '16px' }}>
                 EXPLORE NETWORK <span className="arrow-small">→</span>
-              </a>
+              </button>
 
               <div className="fuel-savings-metric-boxes">
                 <div className="metric-mini-box">
@@ -220,7 +219,7 @@ const Homepage = ({ onTabChange }) => {
           </p>
           <div className="cta-modern-buttons">
             <button className="btn-modern-orange" onClick={() => onTabChange('plan-trip')}>Start Free Trial</button>
-            <button className="btn-modern-outline">Schedule a Call</button>
+            <button className="btn-modern-outline" onClick={() => onTabChange('plan-trip')}>Schedule a Demo</button>
           </div>
         </section>
 

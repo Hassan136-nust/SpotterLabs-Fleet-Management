@@ -14,8 +14,8 @@
 /* Top Navbar */
 .top-navbar {
   height: 64px;
-  background-color: #000000;
-  border-bottom: 1px solid #141419;
+  background-color: #f97316;
+  border-bottom: 1px solid #ea580c;
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -47,10 +47,10 @@
 }
 
 .navbar-links a {
-  color: #94a3b8;
+  color: rgba(255,255,255,0.9);
   text-decoration: none;
   font-size: 0.8125rem;
-  font-weight: 500;
+  font-weight: 600;
   transition: color 0.2s ease;
 }
 
@@ -77,19 +77,21 @@
 }
 
 .navbar-btn-orange {
-  background-color: #ff6b00;
-  color: #ffffff;
+  background-color: #ffffff;
+  color: #f97316;
   border: none;
-  padding: 8px 18px;
-  border-radius: 6px;
-  font-size: 0.8125rem;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
 }
 
 .navbar-btn-orange:hover {
-  background-color: #e05e00;
+  background-color: #f1f5f9;
 }
 
 /* Content Container */
