@@ -1,132 +1,159 @@
-import React, { useState, useEffect } from 'react';
-import { FiSearch, FiBell, FiPrinter, FiFileText, FiPlus, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import React, { useState, useEffect, useRef } from 'react';
+import { FiSearch, FiPrinter, FiFileText, FiPlus, FiChevronLeft, FiChevronRight, FiDownload } from 'react-icons/fi';
 import Sidebar from './Sidebar';
 import './ELDLogsPage.css';
 
 /* ═══════════════════════════════════════════════════════════
-   FMCSA CONSTANTS
+   FMCSA CONSTANTS  (wider/taller for crystal clarity)
 ═══════════════════════════════════════════════════════════ */
-const HOUR_WIDTH  = 48;    // px per hour — wider for readability
-const ROW_HEIGHT  = 44;    // px per status row
-const GRID_WIDTH  = HOUR_WIDTH * 24;   // 1152px
-const GRID_HEIGHT = ROW_HEIGHT * 4;    // 176px
-const LEFT_LABEL  = 110;  // width of left label column (px in SVG units)
-const RIGHT_COL   = 60;   // right totals column
-const TOP_LABEL   = 28;   // height of hour labels row
+const HOUR_WIDTH  = 52;
+const ROW_HEIGHT  = 52;
+const GRID_WIDTH  = HOUR_WIDTH * 24;      // 1248px
+const GRID_HEIGHT = ROW_HEIGHT * 4;       // 208px
+const LEFT_LABEL  = 130;
+const RIGHT_COL   = 72;
+const TOP_LABEL   = 32;
 
-// Fixed row order per FMCSA: 0=OFF 1=SB 2=D 3=ON
-const ROW_ORDER   = ['OFF', 'SB', 'D', 'ON'];
-const ROW_NAMES   = {
+const ROW_ORDER = ['OFF', 'SB', 'D', 'ON'];
+const ROW_NAMES = {
   OFF: 'Off Duty',
   SB:  'Sleeper Berth',
   D:   'Driving',
   ON:  'On Duty (Not Drv.)',
 };
 const STATUS_COLORS = {
-  OFF: '#4B5563',
+  OFF: '#6B7280',
   SB:  '#7C3AED',
-  D:   '#3B82F6',
-  ON:  '#F59E0B',
+  D:   '#2563EB',
+  ON:  '#D97706',
+};
+const STATUS_COLORS_PRINT = {
+  OFF: '#9ca3af',
+  SB:  '#7c3aed',
+  D:   '#2563eb',
+  ON:  '#d97706',
 };
 
 function timeToX(timeStr) {
   if (!timeStr) return 0;
-  const [h, m] = timeStr.split(':').map(Number);
+  const parts = timeStr.split(':').map(Number);
+  const h = parts[0] || 0, m = parts[1] || 0;
   return Math.min((h + m / 60) * HOUR_WIDTH, GRID_WIDTH);
 }
 
 function fmtHrs(dec) {
-  const h = Math.floor(Math.abs(dec));
-  const m = Math.round((Math.abs(dec) - h) * 60);
+  const abs = Math.abs(dec || 0);
+  const h = Math.floor(abs);
+  const m = Math.round((abs - h) * 60);
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
 /* ═══════════════════════════════════════════════════════════
-   ELD CANVAS SVG
+   FMCSA CANVAS SVG  — clean block style
 ═══════════════════════════════════════════════════════════ */
-function ELDCanvas({ events }) {
+function ELDCanvas({ events, forPrint = false }) {
   const totalW = LEFT_LABEL + GRID_WIDTH + RIGHT_COL;
-  const totalH = TOP_LABEL + GRID_HEIGHT + 2;
+  const totalH = TOP_LABEL + GRID_HEIGHT + 30;
 
-  // Compute per-row totals for totals column
+  const bg    = forPrint ? '#ffffff' : '#080e1a';
+  const gridC = forPrint ? '#d1d5db' : '#1e293b';
+  const majorC= forPrint ? '#9ca3af' : '#374151';
+  const lblC  = forPrint ? '#111827' : '#cbd5e1';
+  const colors = forPrint ? STATUS_COLORS_PRINT : STATUS_COLORS;
+
+  // Per-row totals
   const rowTotals = { OFF: 0, SB: 0, D: 0, ON: 0 };
   if (events) {
     events.forEach(ev => {
-      if (ev.start && ev.end && ROW_ORDER.includes(ev.status)) {
-        const [sh, sm] = ev.start.split(':').map(Number);
-        const [eh, em] = ev.end.split(':').map(Number);
-        const mins = (eh * 60 + em) - (sh * 60 + sm);
-        rowTotals[ev.status] = (rowTotals[ev.status] || 0) + Math.max(mins, 0) / 60;
-      }
+      if (!ev.start || !ev.end || !ROW_ORDER.includes(ev.status)) return;
+      const [sh, sm] = ev.start.split(':').map(Number);
+      const [eh, em] = ev.end.split(':').map(Number);
+      const mins = (eh * 60 + em) - (sh * 60 + sm);
+      rowTotals[ev.status] += Math.max(mins, 0) / 60;
     });
   }
   const totalSum = Object.values(rowTotals).reduce((a, b) => a + b, 0);
+  const sumOk = Math.abs(totalSum - 24) < 0.3;
 
-  // Hour labels above grid
+  // ── Hour labels ──
   const hourLabels = [];
   for (let h = 0; h <= 24; h++) {
     const x = LEFT_LABEL + h * HOUR_WIDTH;
-    let label = '';
-    if (h === 0)       label = 'Mid';
-    else if (h === 12) label = 'Noon';
-    else if (h === 24) label = '';
-    else               label = String(h);
+    let label = h === 0 ? 'Mid' : h === 12 ? 'Noon' : h === 24 ? '' : String(h);
     hourLabels.push(
-      <text key={`hl-${h}`} x={x} y={TOP_LABEL - 6} textAnchor="middle"
-        fill="#9ca3af" fontSize="10" fontFamily="Inter,system-ui,sans-serif" fontWeight="600">
+      <text key={`hl-${h}`} x={x} y={TOP_LABEL - 8} textAnchor="middle"
+        fill={lblC} fontSize="10" fontFamily="Inter,Arial,sans-serif" fontWeight="700">
         {label}
       </text>
     );
+    // 15-min sub-tick marks at bottom of label area
+    if (h < 24) {
+      [0.25, 0.5, 0.75].forEach((frac, ti) => {
+        const xt = LEFT_LABEL + (h + frac) * HOUR_WIDTH;
+        hourLabels.push(
+          <line key={`tick-${h}-${ti}`}
+            x1={xt} y1={TOP_LABEL - 4} x2={xt} y2={TOP_LABEL}
+            stroke={majorC} strokeWidth={frac === 0.5 ? 1 : 0.5} />
+        );
+      });
+    }
   }
 
-  // Vertical grid lines
+  // ── Vertical grid lines ──
   const vLines = [];
   for (let h = 0; h <= 24; h++) {
     const x = LEFT_LABEL + h * HOUR_WIDTH;
-    const isMajor = (h % 6 === 0);
+    const isMajor = h % 6 === 0;
     vLines.push(
       <line key={`vl-${h}`} x1={x} y1={TOP_LABEL} x2={x} y2={TOP_LABEL + GRID_HEIGHT}
-        stroke={isMajor ? '#374151' : '#1f2937'} strokeWidth={isMajor ? 1.5 : 0.5} />
+        stroke={isMajor ? majorC : gridC}
+        strokeWidth={isMajor ? 1.5 : 0.7} />
     );
-    // 30-min tick
     if (h < 24) {
-      const xh = LEFT_LABEL + h * HOUR_WIDTH + HOUR_WIDTH / 2;
       vLines.push(
-        <line key={`vh-${h}`} x1={xh} y1={TOP_LABEL} x2={xh} y2={TOP_LABEL + GRID_HEIGHT}
-          stroke="#1a2535" strokeWidth={0.3} strokeDasharray="2,2" />
+        <line key={`vhf-${h}`}
+          x1={LEFT_LABEL + (h + 0.5) * HOUR_WIDTH} y1={TOP_LABEL}
+          x2={LEFT_LABEL + (h + 0.5) * HOUR_WIDTH} y2={TOP_LABEL + GRID_HEIGHT}
+          stroke={gridC} strokeWidth={0.4} strokeDasharray="3,3" />
       );
     }
   }
 
-  // Horizontal row dividers + row labels
-  const hLines  = [];
-  const rowLbls = [];
+  // ── Horizontal row dividers + labels ──
+  const rowElems = [];
   ROW_ORDER.forEach((status, i) => {
-    const y = TOP_LABEL + i * ROW_HEIGHT;
-    hLines.push(
-      <line key={`hl-${i}`} x1={0} y1={y} x2={LEFT_LABEL + GRID_WIDTH + RIGHT_COL} y2={y}
-        stroke="#374151" strokeWidth={i === 0 ? 1.5 : 1} />
+    const y    = TOP_LABEL + i * ROW_HEIGHT;
+    const col  = colors[status];
+    // Alternating row background
+    rowElems.push(
+      <rect key={`rbg-${i}`} x={LEFT_LABEL} y={y}
+        width={GRID_WIDTH} height={ROW_HEIGHT}
+        fill={col} opacity={forPrint ? 0.06 : 0.05} />
     );
-    // Row label
-    rowLbls.push(
-      <text key={`rl-${i}`} x={LEFT_LABEL - 8} y={y + ROW_HEIGHT / 2 + 4}
-        textAnchor="end" fill="#d1d5db" fontSize="10" fontFamily="Inter,system-ui,sans-serif" fontWeight="700">
+    rowElems.push(
+      <line key={`rh-${i}`} x1={0} y1={y} x2={LEFT_LABEL + GRID_WIDTH + RIGHT_COL} y2={y}
+        stroke={majorC} strokeWidth={i === 0 ? 1.5 : 1} />
+    );
+    // Row label: colored dot + text
+    rowElems.push(
+      <circle key={`rdot-${i}`} cx={8} cy={y + ROW_HEIGHT / 2}
+        r={4} fill={col} />
+    );
+    rowElems.push(
+      <text key={`rl-${i}`} x={18} y={y + ROW_HEIGHT / 2 + 4}
+        textAnchor="start" fill={lblC}
+        fontSize="10" fontFamily="Inter,Arial,sans-serif" fontWeight="700">
         {ROW_NAMES[status]}
       </text>
     );
-    // Colored row background (subtle)
-    hLines.push(
-      <rect key={`rb-${i}`} x={LEFT_LABEL} y={y} width={GRID_WIDTH} height={ROW_HEIGHT}
-        fill={STATUS_COLORS[status]} opacity={0.04} />
-    );
   });
-  // Bottom border
-  hLines.push(
-    <line key="hl-bot" x1={0} y1={TOP_LABEL + GRID_HEIGHT} x2={LEFT_LABEL + GRID_WIDTH + RIGHT_COL} y2={TOP_LABEL + GRID_HEIGHT}
-      stroke="#374151" strokeWidth={1.5} />
+  rowElems.push(
+    <line key="rh-bot" x1={0} y1={TOP_LABEL + GRID_HEIGHT}
+      x2={LEFT_LABEL + GRID_WIDTH + RIGHT_COL} y2={TOP_LABEL + GRID_HEIGHT}
+      stroke={majorC} strokeWidth={2} />
   );
 
-  // Status blocks + drop lines
+  // ── Status blocks + drop lines ──
   const blocks    = [];
   const dropLines = [];
 
@@ -134,126 +161,157 @@ function ELDCanvas({ events }) {
     events.forEach((ev, i) => {
       const rowIdx = ROW_ORDER.indexOf(ev.status);
       if (rowIdx < 0) return;
-      const x1 = LEFT_LABEL + timeToX(ev.start);
-      const x2 = LEFT_LABEL + timeToX(ev.end);
-      const y  = TOP_LABEL + rowIdx * ROW_HEIGHT;
-      const color = STATUS_COLORS[ev.status] || '#4B5563';
-      const w = Math.max(x2 - x1, 0);
+      const x1  = LEFT_LABEL + timeToX(ev.start);
+      const x2  = LEFT_LABEL + timeToX(ev.end);
+      const y   = TOP_LABEL + rowIdx * ROW_HEIGHT;
+      const col = colors[ev.status] || '#4B5563';
+      const w   = Math.max(x2 - x1, 0);
 
-      // Filled block
+      // Main status fill
       blocks.push(
-        <rect key={`blk-${i}`} x={x1} y={y + 2} width={w} height={ROW_HEIGHT - 4}
-          fill={color} opacity={0.82} rx={2} />
+        <rect key={`blk-${i}`} x={x1} y={y + 3} width={w} height={ROW_HEIGHT - 6}
+          fill={col} opacity={forPrint ? 0.75 : 0.88} rx={3} />
+      );
+      // Bright top accent stripe
+      blocks.push(
+        <rect key={`top-${i}`} x={x1} y={y + 3} width={w} height={4}
+          fill={col} opacity={forPrint ? 1 : 1} rx={2} />
       );
 
-      // Time label inside block (if wide enough)
-      if (w >= 36) {
+      // Time range label inside block
+      if (w >= 44) {
         blocks.push(
           <text key={`bt-${i}`} x={x1 + w / 2} y={y + ROW_HEIGHT / 2 + 4}
-            textAnchor="middle" fill="#ffffff" fontSize="9"
-            fontFamily="Inter,system-ui,sans-serif" fontWeight="800" opacity={0.9}>
-            {ev.start}–{ev.end}
+            textAnchor="middle" fill="#ffffff" fontSize="9.5"
+            fontFamily="Inter,Arial,sans-serif" fontWeight="900">
+            {ev.start} – {ev.end}
           </text>
         );
       }
 
-      // Vertical drop line at transition
+      // Duration label below block (if space)
+      if (w >= 50 && ev.hours) {
+        blocks.push(
+          <text key={`bh-${i}`} x={x1 + w / 2} y={y + ROW_HEIGHT - 6}
+            textAnchor="middle" fill="#ffffff" fontSize="8"
+            fontFamily="Inter,Arial,sans-serif" fontWeight="600" opacity={0.7}>
+            {fmtHrs(ev.hours)}h
+          </text>
+        );
+      }
+
+      // Vertical white drop line at status transition
       if (i > 0) {
         const prevRowIdx = ROW_ORDER.indexOf(events[i - 1].status);
         if (prevRowIdx >= 0 && prevRowIdx !== rowIdx) {
-          const yTop = TOP_LABEL + Math.min(prevRowIdx, rowIdx) * ROW_HEIGHT;
-          const yBot = TOP_LABEL + (Math.max(prevRowIdx, rowIdx) + 1) * ROW_HEIGHT;
+          const yTop = TOP_LABEL + Math.min(prevRowIdx, rowIdx) * ROW_HEIGHT + 3;
+          const yBot = TOP_LABEL + (Math.max(prevRowIdx, rowIdx) + 1) * ROW_HEIGHT - 3;
           dropLines.push(
             <line key={`dl-${i}`} x1={x1} y1={yTop} x2={x1} y2={yBot}
-              stroke="#ffffff" strokeWidth={2} opacity={0.85} />
+              stroke={forPrint ? '#374151' : '#ffffff'} strokeWidth={2.5} opacity={0.9} />
+          );
+          // Diamond marker at transition
+          dropLines.push(
+            <polygon key={`dia-${i}`}
+              points={`${x1},${yTop - 4} ${x1 + 5},${yTop + 1} ${x1},${yTop + 6} ${x1 - 5},${yTop + 1}`}
+              fill={forPrint ? '#374151' : '#ffffff'} opacity={0.9} />
           );
         }
       }
     });
   } else {
-    // Empty state hint
     blocks.push(
-      <text key="empty" x={LEFT_LABEL + GRID_WIDTH / 2} y={TOP_LABEL + GRID_HEIGHT / 2 + 4}
-        textAnchor="middle" fill="#6b7280" fontSize="13"
-        fontFamily="Inter,system-ui,sans-serif">
-        Plan a trip to generate ELD log data
+      <text key="empty" x={LEFT_LABEL + GRID_WIDTH / 2} y={TOP_LABEL + GRID_HEIGHT / 2 + 5}
+        textAnchor="middle" fill={forPrint ? '#9ca3af' : '#475569'} fontSize="14"
+        fontFamily="Inter,Arial,sans-serif" fontStyle="italic">
+        No ELD events — plan a trip first
       </text>
     );
   }
 
-  // Totals column (right side)
+  // ── Totals column ──
   const totCells = [];
-  // Header
   totCells.push(
-    <rect key="tot-hdr-bg" x={LEFT_LABEL + GRID_WIDTH} y={TOP_LABEL} width={RIGHT_COL} height={GRID_HEIGHT} fill="#111827" />,
-    <text key="tot-hdr" x={LEFT_LABEL + GRID_WIDTH + RIGHT_COL / 2} y={TOP_LABEL - 8}
-      textAnchor="middle" fill="#9ca3af" fontSize="9" fontFamily="Inter,system-ui,sans-serif" fontWeight="700">
+    <rect key="tot-bg" x={LEFT_LABEL + GRID_WIDTH} y={TOP_LABEL}
+      width={RIGHT_COL} height={GRID_HEIGHT}
+      fill={forPrint ? '#f9fafb' : '#0c1424'} />,
+    <text key="tot-hdr-lbl"
+      x={LEFT_LABEL + GRID_WIDTH + RIGHT_COL / 2} y={TOP_LABEL - 8}
+      textAnchor="middle" fill={lblC} fontSize="9"
+      fontFamily="Inter,Arial,sans-serif" fontWeight="800" letterSpacing="1">
       HOURS
     </text>
   );
   ROW_ORDER.forEach((status, i) => {
-    const y = TOP_LABEL + i * ROW_HEIGHT;
+    const y   = TOP_LABEL + i * ROW_HEIGHT;
+    const col = colors[status];
     totCells.push(
-      <line key={`tl-${i}`} x1={LEFT_LABEL + GRID_WIDTH} y1={y} x2={LEFT_LABEL + GRID_WIDTH + RIGHT_COL} y2={y}
-        stroke="#374151" strokeWidth={1} />,
-      <text key={`tv-${i}`} x={LEFT_LABEL + GRID_WIDTH + RIGHT_COL / 2} y={y + ROW_HEIGHT / 2 + 4}
-        textAnchor="middle" fill="#f9fafb" fontSize="12"
-        fontFamily="Inter,system-ui,sans-serif" fontWeight="800">
+      <line key={`tl-${i}`}
+        x1={LEFT_LABEL + GRID_WIDTH} y1={y}
+        x2={LEFT_LABEL + GRID_WIDTH + RIGHT_COL} y2={y}
+        stroke={majorC} strokeWidth={1} />,
+      <rect key={`tbar-${i}`}
+        x={LEFT_LABEL + GRID_WIDTH + 6} y={y + ROW_HEIGHT / 2 + 6}
+        width={Math.min((rowTotals[status] / 12) * (RIGHT_COL - 12), RIGHT_COL - 12)}
+        height={3} fill={col} opacity={0.5} rx={1} />,
+      <text key={`tv-${i}`}
+        x={LEFT_LABEL + GRID_WIDTH + RIGHT_COL / 2} y={y + ROW_HEIGHT / 2 + 4}
+        textAnchor="middle" fill={forPrint ? '#111827' : '#f9fafb'} fontSize="13"
+        fontFamily="Inter,Arial,sans-serif" fontWeight="900">
         {(rowTotals[status] || 0).toFixed(1)}
       </text>
     );
   });
-  // Total sum footer
-  const sumOk = Math.abs(totalSum - 24) < 0.2;
   totCells.push(
-    <line key="tot-sep" x1={LEFT_LABEL + GRID_WIDTH} y1={TOP_LABEL + GRID_HEIGHT} x2={LEFT_LABEL + GRID_WIDTH + RIGHT_COL} y2={TOP_LABEL + GRID_HEIGHT}
-      stroke="#374151" strokeWidth={2} />,
-    <rect key="tot-foot-bg" x={LEFT_LABEL + GRID_WIDTH} y={TOP_LABEL + GRID_HEIGHT} width={RIGHT_COL} height={22} fill={sumOk ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)'} />,
-    <text key="tot-sum" x={LEFT_LABEL + GRID_WIDTH + RIGHT_COL / 2} y={TOP_LABEL + GRID_HEIGHT + 15}
-      textAnchor="middle" fill={sumOk ? '#10b981' : '#ef4444'} fontSize="11"
-      fontFamily="Inter,system-ui,sans-serif" fontWeight="900">
+    <line key="tot-sep"
+      x1={LEFT_LABEL + GRID_WIDTH} y1={TOP_LABEL + GRID_HEIGHT}
+      x2={LEFT_LABEL + GRID_WIDTH + RIGHT_COL} y2={TOP_LABEL + GRID_HEIGHT}
+      stroke={sumOk ? '#10b981' : '#ef4444'} strokeWidth={2.5} />,
+    <rect key="tot-foot"
+      x={LEFT_LABEL + GRID_WIDTH} y={TOP_LABEL + GRID_HEIGHT}
+      width={RIGHT_COL} height={28}
+      fill={sumOk ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'} />,
+    <text key="tot-sum"
+      x={LEFT_LABEL + GRID_WIDTH + RIGHT_COL / 2} y={TOP_LABEL + GRID_HEIGHT + 18}
+      textAnchor="middle"
+      fill={sumOk ? '#10b981' : '#ef4444'} fontSize="12"
+      fontFamily="Inter,Arial,sans-serif" fontWeight="900">
       {totalSum.toFixed(1)} {sumOk ? '✓' : '!'}
     </text>
   );
 
-  // Left border box
-  const outerBorder = (
-    <rect x={0} y={TOP_LABEL} width={LEFT_LABEL + GRID_WIDTH + RIGHT_COL} height={GRID_HEIGHT}
-      fill="none" stroke="#374151" strokeWidth={1.5} />
-  );
-
   return (
     <svg
-      viewBox={`0 0 ${totalW} ${totalH + 24}`}
+      viewBox={`0 0 ${totalW} ${totalH}`}
       width="100%"
-      style={{ display: 'block', minHeight: 220 }}
+      style={{ display: 'block', background: bg }}
     >
-      {/* Grid backgrounds */}
-      <rect x={LEFT_LABEL} y={TOP_LABEL} width={GRID_WIDTH} height={GRID_HEIGHT} fill="#0f172a" />
+      {/* Canvas background */}
+      <rect x={LEFT_LABEL} y={TOP_LABEL}
+        width={GRID_WIDTH} height={GRID_HEIGHT} fill={bg} />
 
-      {/* Row backgrounds + horizontal lines */}
-      {hLines}
+      {/* Row stripes + labels */}
+      {rowElems}
 
-      {/* Vertical grid lines */}
+      {/* Vertical grid */}
       {vLines}
 
-      {/* Hour labels */}
+      {/* Hour labels + tick marks */}
       {hourLabels}
 
-      {/* Row labels */}
-      {rowLbls}
-
-      {/* Status blocks */}
+      {/* Status filled blocks */}
       {blocks}
 
-      {/* Drop lines */}
+      {/* Transition drop lines */}
       {dropLines}
 
       {/* Totals column */}
       {totCells}
 
       {/* Outer border */}
-      {outerBorder}
+      <rect x={0} y={TOP_LABEL}
+        width={LEFT_LABEL + GRID_WIDTH + RIGHT_COL} height={GRID_HEIGHT}
+        fill="none" stroke={majorC} strokeWidth={1.5} />
     </svg>
   );
 }
@@ -305,12 +363,177 @@ const defaultMockLogs = [
 ];
 
 /* ═══════════════════════════════════════════════════════════
+   PDF / PRINT GENERATOR
+═══════════════════════════════════════════════════════════ */
+function buildPrintHTML({ resolvedDriver, shippingDoc, logs }) {
+  const statusLabel = { OFF: 'Off Duty', SB: 'Sleeper Berth', D: 'Driving', ON: 'On Duty (ND)' };
+
+  const daySheets = logs.map((day, idx) => {
+    const events  = day.events || [];
+    const totals  = day.totals || {};
+    const t       = {
+      OFF: totals.OFF ?? totals.off_duty ?? 0,
+      SB:  totals.SB  ?? totals.sleeper  ?? 0,
+      D:   totals.D   ?? totals.driving  ?? 0,
+      ON:  totals.ON  ?? totals.on_duty  ?? 0,
+    };
+    const totalHrs = t.OFF + t.SB + t.D + t.ON;
+    const fmt      = (d) => { const h=Math.floor(d), m=Math.round((d-h)*60); return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; };
+
+    // Build inline SVG for the print canvas (using forPrint=true colors on white)
+    const HW = 40, RH = 40, GW = HW * 24, GH = RH * 4, LL = 110, RC = 56, TL = 22;
+    const cols = { OFF: '#9ca3af', SB: '#7c3aed', D: '#2563eb', ON: '#d97706' };
+    const txc  = (t) => { if(!t) return 0; const [h,m]=t.split(':').map(Number); return Math.min((h+m/60)*HW, GW); };
+
+    let svgBlocks = '';
+    let svgDrops  = '';
+    const order   = ['OFF','SB','D','ON'];
+    events.forEach((ev, i) => {
+      const ri = order.indexOf(ev.status); if (ri < 0) return;
+      const x1 = LL + txc(ev.start), x2 = LL + txc(ev.end), y = TL + ri * RH;
+      const w  = Math.max(x2 - x1, 0);
+      const c  = cols[ev.status] || '#aaa';
+      svgBlocks += `<rect x="${x1}" y="${y+2}" width="${w}" height="${RH-4}" fill="${c}" opacity="0.7" rx="2"/>`;
+      if (w >= 30) svgBlocks += `<text x="${x1+w/2}" y="${y+RH/2+4}" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold" font-family="Arial">${ev.start}–${ev.end}</text>`;
+      if (i > 0) {
+        const pi = order.indexOf(events[i-1].status);
+        if (pi >= 0 && pi !== ri) {
+          const yt = TL + Math.min(pi,ri)*RH, yb = TL + (Math.max(pi,ri)+1)*RH;
+          svgDrops += `<line x1="${x1}" y1="${yt}" x2="${x1}" y2="${yb}" stroke="#374151" stroke-width="2"/>`;
+        }
+      }
+    });
+
+    let gridV = ''; for(let h=0;h<=24;h++){const x=LL+h*HW,maj=h%6===0; gridV+=`<line x1="${x}" y1="${TL}" x2="${x}" y2="${TL+GH}" stroke="${maj?'#9ca3af':'#e5e7eb'}" stroke-width="${maj?1.2:0.4}"/>`;} 
+    let gridH = ''; order.forEach((_,i)=>{const y=TL+i*RH; gridH+=`<line x1="0" y1="${y}" x2="${LL+GW+RC}" y2="${y}" stroke="#9ca3af" stroke-width="${i===0?1.5:0.7}"/>`;});
+    gridH += `<line x1="0" y1="${TL+GH}" x2="${LL+GW+RC}" y2="${TL+GH}" stroke="#6b7280" stroke-width="1.5"/>`;
+    let rowLbls = ''; const rnames=['Off Duty','Sleeper Berth','Driving','On Duty (Not Drv.)']; order.forEach((s,i)=>{const y=TL+i*RH; rowLbls+=`<text x="${LL-6}" y="${y+RH/2+4}" text-anchor="end" fill="#111" font-size="9" font-weight="bold" font-family="Arial">${rnames[i]}</text>`;});
+    let hlbls = ''; for(let h=0;h<=24;h++){const x=LL+h*HW; let l=h===0?'Mid':h===12?'Noon':h===24?'':String(h); hlbls+=`<text x="${x}" y="${TL-5}" text-anchor="middle" fill="#374151" font-size="9" font-weight="bold" font-family="Arial">${l}</text>`;}
+    let totCol = ''; order.forEach((s,i)=>{const y=TL+i*RH; totCol+=`<line x1="${LL+GW}" y1="${y}" x2="${LL+GW+RC}" y2="${y}" stroke="#9ca3af" stroke-width="0.7"/><text x="${LL+GW+RC/2}" y="${y+RH/2+4}" text-anchor="middle" fill="#111" font-size="11" font-weight="bold" font-family="Arial">${(t[s]||0).toFixed(1)}</text>`;});
+
+    const evRows = events.map(ev => `
+      <tr>
+        <td style="color:${cols[ev.status]};font-weight:800">${statusLabel[ev.status]||ev.status}</td>
+        <td>${ev.start||'—'}</td><td>${ev.end||'—'}</td>
+        <td>${fmt(ev.hours||0)}</td>
+        <td>${ev.location||'—'}</td>
+      </tr>`).join('');
+
+    const rmkRows = (day.remarks||[]).map(r => `<tr><td>▸</td><td colspan="4">${r}</td></tr>`).join('');
+
+    let dateStr = day.dateString || '—';
+    if (dateStr.includes('-')) { const [y,m,d]=dateStr.split('-'); dateStr=`${m}/${d}/${y}`; }
+
+    return `
+      <div class="page-break">
+        <div class="doc-header">
+          <div class="doc-title">DRIVER'S DAILY LOG — FMCSA RODS</div>
+          <div class="doc-subtitle">Day ${day.dayNumber || idx+1} of ${logs.length}</div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-cell"><div class="info-lbl">DATE</div><div class="info-val">${dateStr}</div></div>
+          <div class="info-cell"><div class="info-lbl">DRIVER NAME</div><div class="info-val">${resolvedDriver.name||'—'}</div></div>
+          <div class="info-cell"><div class="info-lbl">DRIVER ID</div><div class="info-val">${resolvedDriver.id||'—'}</div></div>
+          <div class="info-cell"><div class="info-lbl">VEHICLE #</div><div class="info-val">${resolvedDriver.truck||'—'}</div></div>
+          <div class="info-cell"><div class="info-lbl">CO-DRIVER</div><div class="info-val">${resolvedDriver.coDriver||'None'}</div></div>
+          <div class="info-cell"><div class="info-lbl">CARRIER</div><div class="info-val">${resolvedDriver.carrier||'—'}</div></div>
+          <div class="info-cell"><div class="info-lbl">MAIN OFFICE</div><div class="info-val">${resolvedDriver.mainOffice||'—'}</div></div>
+          <div class="info-cell"><div class="info-lbl">SHIPPING DOC</div><div class="info-val">${shippingDoc}</div></div>
+          <div class="info-cell"><div class="info-lbl">TOTAL MILES</div><div class="info-val">${day.total_miles_today||0} mi</div></div>
+          <div class="info-cell"><div class="info-lbl">24HR START</div><div class="info-val">Midnight (00:00)</div></div>
+        </div>
+
+        <div class="canvas-wrapper">
+          <svg viewBox="0 0 ${LL+GW+RC+10} ${TL+GH+30}" width="100%">
+            <rect x="${LL}" y="${TL}" width="${GW}" height="${GH}" fill="#f9fafb"/>
+            ${gridH}${gridV}${rowLbls}${hlbls}${svgBlocks}${svgDrops}
+            <text x="${LL+GW+RC/2}" y="${TL-5}" text-anchor="middle" fill="#374151" font-size="8" font-weight="bold" font-family="Arial">HRS</text>
+            <rect x="${LL+GW}" y="${TL}" width="${RC}" height="${GH}" fill="#f3f4f6"/>
+            ${totCol}
+            <rect x="${LL+GW}" y="${TL+GH}" width="${RC}" height="22" fill="#dbeafe"/>
+            <text x="${LL+GW+RC/2}" y="${TL+GH+15}" text-anchor="middle" fill="#1d4ed8" font-size="11" font-weight="bold" font-family="Arial">${totalHrs.toFixed(1)} ✓</text>
+            <rect x="0" y="${TL}" width="${LL+GW+RC}" height="${GH}" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+          </svg>
+        </div>
+
+        <div class="totals-strip">
+          <div class="tot-box"><div class="tot-lbl">OFF DUTY</div><div class="tot-val gray">${fmt(t.OFF)}</div></div>
+          <div class="tot-box"><div class="tot-lbl">SLEEPER</div><div class="tot-val purple">${fmt(t.SB)}</div></div>
+          <div class="tot-box"><div class="tot-lbl">DRIVING</div><div class="tot-val blue">${fmt(t.D)}</div></div>
+          <div class="tot-box"><div class="tot-lbl">ON DUTY (ND)</div><div class="tot-val amber">${fmt(t.ON)}</div></div>
+          <div class="tot-box total-box"><div class="tot-lbl">24-HR TOTAL</div><div class="tot-val">${fmt(totalHrs)}</div></div>
+        </div>
+
+        <table class="events-table">
+          <thead><tr><th>STATUS</th><th>START</th><th>END</th><th>DURATION</th><th>LOCATION</th></tr></thead>
+          <tbody>${evRows||'<tr><td colspan="5" style="text-align:center;color:#9ca3af">No events</td></tr>'}</tbody>
+        </table>
+
+        ${rmkRows ? `<div class="remarks-section"><div class="remarks-title">REMARKS &amp; ANNOTATIONS</div><table class="remarks-table"><tbody>${rmkRows}</tbody></table></div>` : ''}
+
+        <div class="signature-row">
+          <div class="sig-left"><div class="sig-lbl">DRIVER SIGNATURE</div><div class="sig-value">${resolvedDriver.name||'________________'}</div></div>
+          <div class="sig-right"><div class="sig-lbl">DATE SIGNED</div><div class="sig-value">${dateStr}</div></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>ELD Driver Log — ${resolvedDriver.name || 'Driver'}</title>
+<style>
+  @page { size: A4 landscape; margin: 14mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #111; background: #fff; }
+  .page-break { page-break-after: always; padding-bottom: 16px; }
+  .page-break:last-child { page-break-after: avoid; }
+  .doc-header { text-align: center; border-bottom: 3px solid #1d4ed8; padding-bottom: 8px; margin-bottom: 12px; }
+  .doc-title { font-size: 16px; font-weight: 900; color: #1d4ed8; letter-spacing: 2px; }
+  .doc-subtitle { font-size: 10px; color: #6b7280; margin-top: 2px; letter-spacing: 1px; }
+  .info-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; }
+  .info-cell { border: 1px solid #e5e7eb; border-radius: 4px; padding: 6px 8px; background: #f9fafb; }
+  .info-lbl { font-size: 7.5px; font-weight: 800; color: #6b7280; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 2px; }
+  .info-val { font-size: 11px; font-weight: 700; color: #111; }
+  .canvas-wrapper { border: 1.5px solid #9ca3af; border-radius: 6px; overflow: hidden; margin-bottom: 10px; background: #f9fafb; }
+  .totals-strip { display: flex; gap: 6px; margin-bottom: 10px; }
+  .tot-box { flex: 1; border: 1px solid #e5e7eb; border-radius: 4px; padding: 6px 8px; background: #f9fafb; text-align: center; }
+  .total-box { background: #eff6ff; border-color: #1d4ed8; }
+  .tot-lbl { font-size: 7px; font-weight: 800; color: #6b7280; letter-spacing: 0.1em; }
+  .tot-val { font-size: 15px; font-weight: 900; color: #111; }
+  .tot-val.gray   { color: #4b5563; }
+  .tot-val.purple { color: #7c3aed; }
+  .tot-val.blue   { color: #1d4ed8; }
+  .tot-val.amber  { color: #d97706; }
+  .events-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10px; }
+  .events-table th { background: #1d4ed8; color: #fff; padding: 5px 8px; text-align: left; font-size: 9px; letter-spacing: 0.08em; }
+  .events-table td { padding: 4px 8px; border-bottom: 1px solid #e5e7eb; }
+  .events-table tr:nth-child(even) td { background: #f9fafb; }
+  .remarks-section { margin-bottom: 10px; }
+  .remarks-title { font-size: 8px; font-weight: 900; color: #6b7280; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .remarks-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .remarks-table td { padding: 3px 6px; border-bottom: 1px solid #f3f4f6; }
+  .remarks-table td:first-child { color: #d97706; width: 16px; }
+  .signature-row { display: flex; gap: 24px; border-top: 2px solid #111; padding-top: 8px; margin-top: 8px; }
+  .sig-left, .sig-right { flex: 1; }
+  .sig-lbl { font-size: 8px; font-weight: 800; color: #6b7280; letter-spacing: 0.08em; }
+  .sig-value { font-family: 'Georgia', serif; font-size: 18px; color: #1d4ed8; border-bottom: 1px solid #111; padding-bottom: 2px; margin-top: 4px; }
+</style>
+</head>
+<body>
+${daySheets}
+</body>
+</html>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
    MAIN PAGE
 ═══════════════════════════════════════════════════════════ */
 const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
   const hasRealData = eldResult?.dailyLogs?.length > 0;
 
-  // Resolve driver display values — real data when provided, fallbacks otherwise
   const di = driverInfo || {};
   const resolvedDriver = {
     name:       di.driverName  || (hasRealData ? '' : 'Alex Rivera'),
@@ -320,24 +543,23 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
     carrier:    di.carrierId   || (hasRealData ? '—' : 'Spotter Labs Logistics LLC'),
     mainOffice: di.mainOffice  || (hasRealData ? '—' : 'Chicago, IL'),
   };
-  // Avatar initials from name
   const avatarInitials = resolvedDriver.name
     ? resolvedDriver.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
     : '?';
-
-  // Shipping doc from eldResult if present, else show as manifest-{date}
   const shippingDoc = eldResult?.shippingDoc ||
-    (hasRealData ? `MFT-${eldResult.dailyLogs[0]?.dateString?.replace(/-/g,'') || '—'}` : 'MANIFEST-81203');
+    (hasRealData
+      ? `MFT-${(eldResult.dailyLogs[0]?.dateString || '').replace(/-/g, '')}`
+      : 'MANIFEST-81203');
 
   const [selectedDayIdx, setSelectedDayIdx] = useState(0);
   const [localLogs, setLocalLogs] = useState(() =>
     hasRealData ? eldResult.dailyLogs : defaultMockLogs
   );
-  const [showModal, setShowModal]                   = useState(false);
-  const [newRemarkStatus, setNewRemarkStatus]       = useState('OFF');
-  const [newRemarkTime, setNewRemarkTime]           = useState('12:00');
-  const [newRemarkLocation, setNewRemarkLocation]   = useState('');
-  const [newRemarkNote, setNewRemarkNote]           = useState('');
+  const [showModal, setShowModal]               = useState(false);
+  const [newRemarkStatus, setNewRemarkStatus]   = useState('OFF');
+  const [newRemarkTime, setNewRemarkTime]       = useState('12:00');
+  const [newRemarkLocation, setNewRemarkLocation] = useState('');
+  const [newRemarkNote, setNewRemarkNote]       = useState('');
 
   useEffect(() => {
     setLocalLogs(hasRealData ? eldResult.dailyLogs : defaultMockLogs);
@@ -347,10 +569,8 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
   const currentDay = localLogs[Math.min(selectedDayIdx, localLogs.length - 1)] || null;
 
   let currentDateString = '—';
-  let totals   = { OFF: 0, SB: 0, D: 0, ON: 0 };
-  let events   = [];
-  let miles    = 0;
-  let remarks  = [];
+  let totals = { OFF: 0, SB: 0, D: 0, ON: 0 };
+  let events = [], miles = 0, remarks = [];
 
   if (currentDay) {
     if (currentDay.dateString?.includes('-')) {
@@ -373,12 +593,23 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
 
   const totalHrs = totals.OFF + totals.SB + totals.D + totals.ON;
 
+  // ── Download / Print PDF ──
+  const handleDownloadPDF = () => {
+    const html = buildPrintHTML({ resolvedDriver, shippingDoc, logs: localLogs });
+    const win  = window.open('', '_blank', 'width=1120,height=860');
+    if (!win) { alert('Pop-up blocked — please allow pop-ups for this site.'); return; }
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); }, 600);
+  };
+
   const handleAddRemark = (e) => {
     e.preventDefault();
     const entry = `${newRemarkTime} – ${newRemarkLocation} (${newRemarkStatus}: ${newRemarkNote})`;
     const updated = [...localLogs];
-    const cur = { ...updated[selectedDayIdx] };
-    cur.remarks = [...(cur.remarks || []), entry];
+    const cur     = { ...updated[selectedDayIdx] };
+    cur.remarks   = [...(cur.remarks || []), entry];
     updated[selectedDayIdx] = cur;
     setLocalLogs(updated);
     setShowModal(false);
@@ -386,7 +617,9 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
     setNewRemarkNote('');
   };
 
-  const STATUS_FULL_NAMES = { OFF: 'OFF DUTY', SB: 'SLEEPER BERTH', D: 'DRIVING', ON: 'ON DUTY (ND)' };
+  const STATUS_FULL_NAMES = {
+    OFF: 'OFF DUTY', SB: 'SLEEPER BERTH', D: 'DRIVING', ON: 'ON DUTY (ND)'
+  };
 
   return (
     <div className="eld-page-layout">
@@ -394,7 +627,7 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
 
       <div className="eld-main-panel">
 
-        {/* ── Topbar ── */}
+        {/* Topbar */}
         <header className="eld-top-header">
           <div className="eld-title-container">
             <span className="eld-page-header-title">ELD Logs</span>
@@ -419,14 +652,14 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
 
         <div className="eld-content-viewport">
 
-          {/* ── HOS Status Cards ── */}
+          {/* HOS Clock Cards */}
           <section className="eld-clocks-strip-grid">
             {[
-              { lbl: 'OFF DUTY',       val: totals.OFF, max: 24, color: STATUS_COLORS.OFF },
-              { lbl: 'SLEEPER BERTH',  val: totals.SB,  max: 10, color: STATUS_COLORS.SB  },
-              { lbl: 'DRIVING',        val: totals.D,   max: 11, color: STATUS_COLORS.D   },
-              { lbl: 'ON DUTY (ND)',   val: totals.ON,  max: 14, color: STATUS_COLORS.ON  },
-              { lbl: '24-HR TOTAL',    val: totalHrs,   max: 24, color: '#ff6b00'         },
+              { lbl: 'OFF DUTY',      val: totals.OFF, max: 24, color: STATUS_COLORS.OFF },
+              { lbl: 'SLEEPER BERTH', val: totals.SB,  max: 10, color: STATUS_COLORS.SB  },
+              { lbl: 'DRIVING',       val: totals.D,   max: 11, color: STATUS_COLORS.D   },
+              { lbl: 'ON DUTY (ND)',  val: totals.ON,  max: 14, color: STATUS_COLORS.ON  },
+              { lbl: '24-HR TOTAL',   val: totalHrs,   max: 24, color: '#ff6b00'         },
             ].map(({ lbl, val, max, color }) => (
               <div key={lbl} className="eld-clock-card" style={{ borderLeft: `3px solid ${color}` }}>
                 <span className="eld-clock-lbl">{lbl}</span>
@@ -438,34 +671,40 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
             ))}
           </section>
 
-          {/* ── Log Sheet Card ── */}
+          {/* Log Sheet Card */}
           <section className="eld-graph-card-main">
 
-            {/* Card header */}
             <div className="eld-graph-card-header">
               <div className="day-selector-tabs">
-                <button className="day-nav-btn" onClick={() => setSelectedDayIdx(i => Math.max(0, i - 1))} disabled={selectedDayIdx === 0}>
+                <button className="day-nav-btn"
+                  onClick={() => setSelectedDayIdx(i => Math.max(0, i - 1))}
+                  disabled={selectedDayIdx === 0}>
                   <FiChevronLeft />
                 </button>
                 {localLogs.map((day, idx) => (
-                  <button
-                    key={idx}
+                  <button key={idx}
                     className={`day-tab-btn ${selectedDayIdx === idx ? 'active' : ''}`}
-                    onClick={() => setSelectedDayIdx(idx)}
-                  >
+                    onClick={() => setSelectedDayIdx(idx)}>
                     Day {day.dayNumber || idx + 1}
                   </button>
                 ))}
-                <button className="day-nav-btn" onClick={() => setSelectedDayIdx(i => Math.min(localLogs.length - 1, i + 1))} disabled={selectedDayIdx === localLogs.length - 1}>
+                <button className="day-nav-btn"
+                  onClick={() => setSelectedDayIdx(i => Math.min(localLogs.length - 1, i + 1))}
+                  disabled={selectedDayIdx === localLogs.length - 1}>
                   <FiChevronRight />
                 </button>
               </div>
-              <button className="eld-utility-btn" onClick={() => window.print()}>
-                <FiPrinter /> Print
-              </button>
+              <div className="eld-graph-actions">
+                <button className="eld-utility-btn" onClick={handleDownloadPDF}>
+                  <FiDownload /> Download PDF
+                </button>
+                <button className="eld-utility-btn" onClick={handleDownloadPDF}>
+                  <FiPrinter /> Print
+                </button>
+              </div>
             </div>
 
-            {/* FMCSA Header fields — all from real data */}
+            {/* FMCSA Header Grid */}
             <div className="fmcsa-header-grid">
               {[
                 ['DATE',             currentDateString],
@@ -488,7 +727,7 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
               </div>
             </div>
 
-            {/* ELD CANVAS */}
+            {/* ── ELD CANVAS ── */}
             <div className="eld-canvas-wrapper">
               <ELDCanvas events={events} />
             </div>
@@ -501,11 +740,21 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
                   <span className="eld-legend-lbl">{ROW_NAMES[status]}</span>
                 </div>
               ))}
+              <div className="eld-legend-item">
+                <span style={{ color: '#94a3b8', fontSize: '0.7rem', marginLeft: 'auto' }}>
+                  ◈ = Status transition
+                </span>
+              </div>
             </div>
 
-            {/* Hourly summary */}
+            {/* Summary strip */}
             <div className="eld-graph-summaries-strip">
-              {[['Total OFF', fmtHrs(totals.OFF), ''], ['Total SB', fmtHrs(totals.SB), ''], ['Total DR', fmtHrs(totals.D), 'text-orange'], ['Total ON', fmtHrs(totals.ON), 'text-blue']].map(([lbl, val, cls]) => (
+              {[
+                ['Total OFF', fmtHrs(totals.OFF), ''],
+                ['Total SB',  fmtHrs(totals.SB),  ''],
+                ['Total DR',  fmtHrs(totals.D),   'text-orange'],
+                ['Total ON',  fmtHrs(totals.ON),  'text-blue'],
+              ].map(([lbl, val, cls]) => (
                 <div key={lbl} className="summary-col">
                   <span className="summary-lbl">{lbl}</span>
                   <span className={`summary-val ${cls}`}>{val}</span>
@@ -514,7 +763,7 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
             </div>
           </section>
 
-          {/* ── Remarks & Events Table ── */}
+          {/* Remarks & Events Table */}
           <section className="eld-annotations-card-large">
             <div className="annotations-header">
               <div className="annotations-title-widget">
@@ -524,7 +773,6 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
               <button className="btn-add-remark" onClick={() => setShowModal(true)}>+ Add Remark</button>
             </div>
 
-            {/* Remarks list */}
             {remarks.length > 0 && (
               <div className="eld-remarks-list">
                 {remarks.map((r, i) => (
@@ -540,18 +788,16 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
               <table className="annotations-table">
                 <thead>
                   <tr>
-                    <th>STATUS</th>
-                    <th>START</th>
-                    <th>END</th>
-                    <th>DURATION</th>
-                    <th>LOCATION</th>
+                    <th>STATUS</th><th>START</th><th>END</th>
+                    <th>DURATION</th><th>LOCATION</th>
                   </tr>
                 </thead>
                 <tbody>
                   {events.length > 0 ? events.map((ev, idx) => (
                     <tr key={idx}>
                       <td>
-                        <span className="status-label-badge" style={{ borderLeft: `4px solid ${STATUS_COLORS[ev.status] || '#4B5563'}`, paddingLeft: 8 }}>
+                        <span className="status-label-badge"
+                          style={{ borderLeft: `4px solid ${STATUS_COLORS[ev.status] || '#4B5563'}`, paddingLeft: 8 }}>
                           {STATUS_FULL_NAMES[ev.status] || ev.status}
                         </span>
                       </td>
@@ -578,9 +824,10 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
         </div>
       </div>
 
-      {/* ── Add Remark Modal ── */}
+      {/* Add Remark Modal */}
       {showModal && (
-        <div className="eld-modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
+        <div className="eld-modal-overlay"
+          onClick={e => e.target === e.currentTarget && setShowModal(false)}>
           <div className="eld-modal-container">
             <h3 className="modal-title">Add HOS Remark</h3>
             <form onSubmit={handleAddRemark}>
@@ -599,11 +846,13 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
               </div>
               <div className="modal-form-group">
                 <label>LOCATION</label>
-                <input type="text" placeholder="City, State" value={newRemarkLocation} onChange={e => setNewRemarkLocation(e.target.value)} required />
+                <input type="text" placeholder="City, State" value={newRemarkLocation}
+                  onChange={e => setNewRemarkLocation(e.target.value)} required />
               </div>
               <div className="modal-form-group">
                 <label>NOTES</label>
-                <input type="text" placeholder="e.g. Fuel stop" value={newRemarkNote} onChange={e => setNewRemarkNote(e.target.value)} required />
+                <input type="text" placeholder="e.g. Fuel stop" value={newRemarkNote}
+                  onChange={e => setNewRemarkNote(e.target.value)} required />
               </div>
               <div className="modal-actions-row">
                 <button type="button" className="btn-modal-cancel" onClick={() => setShowModal(false)}>Cancel</button>

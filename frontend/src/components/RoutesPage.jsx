@@ -1,14 +1,14 @@
 import React from 'react';
-import { 
-  FiSearch, 
-  FiBell, 
-  FiUser, 
-  FiCheckCircle, 
-  FiInfo, 
-  FiMapPin, 
-  FiShare2, 
-  FiPrinter, 
-  FiCalendar, 
+import {
+  FiSearch,
+  FiBell,
+  FiUser,
+  FiCheckCircle,
+  FiInfo,
+  FiMapPin,
+  FiShare2,
+  FiPrinter,
+  FiCalendar,
   FiXCircle,
   FiSend,
   FiTrendingUp,
@@ -67,14 +67,14 @@ const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState, onEldSolved 
     }
     const newDate = prompt("Enter new departure date (YYYY-MM-DD):", tripPlanState.inputs.departureDate);
     if (!newDate) return;
-    
+
     try {
       // Update local inputs state
       setTripPlanState(prev => ({
         ...prev,
         inputs: { ...prev.inputs, departureDate: newDate }
       }));
-      
+
       const response = await fetch('http://localhost:8000/api/plan-trip/', {
         method: 'POST',
         headers: {
@@ -87,13 +87,13 @@ const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState, onEldSolved 
           cycle_hours: parseFloat(tripPlanState.inputs.cycleHours) || 70
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error("Recalculation failed.");
       }
-      
+
       const data = await response.json();
-      
+
       // Update global plan state with recalculated HOS parameters
       setTripPlanState(prev => ({
         ...prev,
@@ -139,7 +139,7 @@ const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState, onEldSolved 
           }))
         });
       }
-      
+
       alert(`Successfully rescheduled departure date to ${newDate} and re-optimized route metrics!`);
     } catch (err) {
       alert("Error rescheduling route: " + err.message);
@@ -150,7 +150,7 @@ const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState, onEldSolved 
     if (!hasActiveRoute) return;
     const confirmCancel = window.confirm("Are you sure you want to cancel and clear the active route?");
     if (!confirmCancel) return;
-    
+
     setTripPlanState({
       inputs: {
         currentLocation: 'Detecting location...',
@@ -186,15 +186,15 @@ const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState, onEldSolved 
 
       {/* Main Panel */}
       <div className="routes-main-panel">
-        
+
         {/* Top Navbar */}
         <header className="routes-top-header">
           <div className="routes-search-container">
             <FiSearch className="routes-search-icon" />
-            <input 
-              type="text" 
-              placeholder="Search routes, drivers, or assets..." 
-              className="routes-search-input" 
+            <input
+              type="text"
+              placeholder="Search routes, drivers, or assets..."
+              className="routes-search-input"
             />
           </div>
           <div className="routes-hdr-widgets">
@@ -211,10 +211,10 @@ const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState, onEldSolved 
 
         {/* Scrollable Content Viewport */}
         <div className="routes-content-viewport">
-          
+
           {/* 1. Map Panel Section */}
           <section className="routes-map-container-section">
-            <MapContainer 
+            <MapContainer
               currentLoc={locations.current}
               pickupLoc={locations.pickup}
               dropoffLoc={locations.dropoff}
@@ -231,16 +231,10 @@ const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState, onEldSolved 
               <div className="map-stat-badge">
                 <span className="green-pulse-dot"></span> VEHICLE LIVE: TRK-492
               </div>
-              <div className="map-stat-badge orange-badge">
-                ⚡ 68 MPH
-              </div>
+
             </div>
 
-            <div className="map-float-waypoints-overlay">
-              <div className="waypoint-item"><span className="waypoint-letter">A</span> 1. Depart terminal</div>
-              <div className="waypoint-item"><span className="waypoint-letter">C</span> 2. Cargo loading stop</div>
-              <div className="waypoint-item"><span className="waypoint-letter">D</span> 3. Navigate destination</div>
-            </div>
+
 
             <div className="map-controls-floating-right">
               <button className="map-ctrl-btn"><FiLayers /></button>
@@ -254,17 +248,17 @@ const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState, onEldSolved 
               <span className="routes-stat-lbl">TOTAL DISTANCE</span>
               <span className="routes-stat-val">{metrics.distance.toLocaleString()} <span className="stat-unit">MILES</span></span>
             </div>
-            
+
             <div className="routes-stat-card">
               <span className="routes-stat-lbl">EST. DRIVE TIME</span>
               <span className="routes-stat-val">{metrics.driveTime} <span className="stat-unit">HRS</span></span>
             </div>
-            
+
             <div className="routes-stat-card border-orange-left">
               <span className="routes-stat-lbl">REMAINING CYCLE</span>
               <span className="routes-stat-val text-orange-val">{formatCycle(metrics.remainingCycle)} <span className="stat-unit">H:M</span></span>
             </div>
-            
+
             <div className="routes-stat-card">
               <span className="routes-stat-lbl">ARRIVAL TIME</span>
               <span className="routes-stat-val">{metrics.etaDate}</span>
@@ -274,7 +268,7 @@ const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState, onEldSolved 
 
           {/* 3. Bottom Workspace Split */}
           <div className="routes-bottom-workspace">
-            
+
             {/* Left Box: Route Timeline */}
             <div className="route-timeline-card-large">
               <div className="timeline-card-header">
@@ -337,7 +331,7 @@ const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState, onEldSolved 
 
             {/* Right Box: Briefing, Asset, Grid */}
             <div className="routes-right-widgets-column">
-              
+
               {/* Card 1: Driver Briefing */}
               <div className="driver-briefing-card">
                 <div className="briefing-header">
@@ -352,7 +346,7 @@ const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState, onEldSolved 
                       Archer Logistics requires high-viz vest and hard hat. Enter via South Gate (Gate 4) only.
                     </p>
                   </div>
-                  
+
                   <div className="briefing-sec">
                     <span className="briefing-sec-lbl">LOAD SPECS</span>
                     <p className="briefing-sec-desc">
@@ -360,7 +354,7 @@ const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState, onEldSolved 
                     </p>
                   </div>
 
-                   {/* Send Button */}
+                  {/* Send Button */}
                   <button className="btn-push-to-eld" onClick={handlePushToEld}>
                     <FiSend className="btn-send-icon" /> PUSH TO ELD
                   </button>
