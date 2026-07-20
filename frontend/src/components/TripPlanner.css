@@ -457,3 +457,51 @@
 .indicator-dashes .dash.active {
   background-color: #ff6b00;
 }
+
+/* Autocomplete suggestions dropdown styling */
+.relative-position {
+  position: relative;
+}
+
+.planner-suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #1e1511;
+  border: 1px solid #2b201a;
+  border-radius: 6px;
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.6);
+  margin-top: 4px;
+}
+
+.planner-suggestion-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  color: #e2e8f0;
+  font-size: 0.8125rem;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.planner-suggestion-item:hover {
+  background-color: #ff6b00;
+  color: #ffffff;
+}
+
+/* Node timeline stop marker colors */
+.node-marker.fuel {
+  background-color: #ff9f00;
+  border: 2px solid #ff9f00;
+  box-shadow: 0 0 8px rgba(255, 159, 0, 0.4);
+}
+
+.node-marker.rest {
+  background-color: #64748b;
+  border: 2px solid #64748b;
+  box-shadow: 0 0 8px rgba(100, 116, 139, 0.4);
+}
+

@@ -22,7 +22,7 @@ const TripPlanner = ({ onTabChange, onEldSolved }) => {
     pickupLocation: 'Des Moines, IA',
     dropoffLocation: 'Denver, CO',
     cycleHours: '70',
-    departureDate: '2023-10-24'
+    departureDate: new Date().toISOString().split('T')[0] // default to today
   });
 
   const [loading, setLoading] = useState(false);
@@ -44,6 +44,46 @@ const TripPlanner = ({ onTabChange, onEldSolved }) => {
     fuelStops: 2,
     restStops: 1
   });
+
+  // Autocomplete and Dynamic stops preview
+  const [suggestions, setSuggestions] = useState({ current: [], pickup: [], dropoff: [] });
+  const [activeField, setActiveField] = useState(null);
+  const [plannedStops, setPlannedStops] = useState([]);
+
+  // Fetch suggestions from Photon API (free, OpenStreetMap data)
+  const handleFetchSuggestions = async (field, query) => {
+    setInputs(prev => ({ ...prev, [field === 'current' ? 'currentLocation' : field === 'pickup' ? 'pickupLocation' : 'dropoffLocation']: query }));
+    
+    if (!query || query.trim().length < 3) {
+      setSuggestions(prev => ({ ...prev, [field]: [] }));
+      return;
+    }
+
+    try {
+      const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`);
+      if (res.ok) {
+        const data = await res.json();
+        const items = data.features.map(f => {
+          const props = f.properties;
+          const city = props.city || props.town || props.name || '';
+          const state = props.state || '';
+          const country = props.country || '';
+          const label = [city, state, country].filter(Boolean).join(', ');
+          return label || props.label || 'Unknown location';
+        });
+        const uniqueItems = Array.from(new Set(items));
+        setSuggestions(prev => ({ ...prev, [field]: uniqueItems }));
+      }
+    } catch (err) {
+      console.error("Photon autocomplete failed:", err);
+    }
+  };
+
+  const handleSelectSuggestion = (field, value) => {
+    setInputs(prev => ({ ...prev, [field === 'current' ? 'currentLocation' : field === 'pickup' ? 'pickupLocation' : 'dropoffLocation']: value }));
+    setSuggestions(prev => ({ ...prev, [field]: [] }));
+    setActiveField(null);
+  };
 
   // Calculate route and HOS metrics using Django backend
   const handleCalculateRoute = async (e) => {
@@ -88,6 +128,9 @@ const TripPlanner = ({ onTabChange, onEldSolved }) => {
 
       // Update Leaflet Route Polyline
       setRouteGeometry(data.route_geometry);
+
+      // Save calculated stops list
+      setPlannedStops(data.stops);
 
       // Sum driving duration
       const totalDriveHrs = data.legs.reduce((acc, leg) => acc + leg.drive_hours, 0);
@@ -134,9 +177,46 @@ const TripPlanner = ({ onTabChange, onEldSolved }) => {
     }
   };
 
-  // Run on mount to initialize default route shown in screenshot (Chicago to Denver)
+  // Run on mount to (1) fetch current location via browser geolocation and (2) trigger initial dispatch
   useEffect(() => {
-    handleCalculateRoute();
+    const initLocationAndRoute = async () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              const { latitude, longitude } = position.coords;
+              const res = await fetch(`https://photon.komoot.io/reverse?lon=${longitude}&lat=${latitude}`);
+              if (res.ok) {
+                const data = await res.json();
+                if (data.features && data.features.length > 0) {
+                  const prop = data.features[0].properties;
+                  const city = prop.city || prop.town || prop.name || '';
+                  const state = prop.state || '';
+                  const label = city && state ? `${city}, ${state}` : prop.label || '';
+                  if (label) {
+                    setInputs(prev => ({ ...prev, currentLocation: label }));
+                  }
+                }
+              }
+            } catch (err) {
+              console.error("Browser location reverse lookup failed:", err);
+            } finally {
+              // Trigger initial calculation
+              handleCalculateRoute();
+            }
+          },
+          (err) => {
+            console.log("Browser geolocation permission denied or timed out. Falling back to Chicago.", err);
+            handleCalculateRoute();
+          },
+          { timeout: 8000 }
+        );
+      } else {
+        handleCalculateRoute();
+      }
+    };
+
+    initLocationAndRoute();
   }, []);
 
   return (
@@ -174,46 +254,82 @@ const TripPlanner = ({ onTabChange, onEldSolved }) => {
             </div>
 
             <form onSubmit={handleCalculateRoute} className="planner-form">
-              <div className="planner-input-group">
+              <div className="planner-input-group relative-position">
                 <label className="planner-input-lbl">CURRENT LOCATION</label>
                 <div className="planner-input-wrapper">
                   <FiMapPin className="input-icon-left text-orange" />
                   <input 
                     type="text" 
                     value={inputs.currentLocation} 
-                    onChange={e => setInputs({ ...inputs, currentLocation: e.target.value })}
+                    onChange={e => handleFetchSuggestions('current', e.target.value)}
+                    onFocus={() => setActiveField('current')}
+                    onBlur={() => setTimeout(() => setActiveField(null), 250)}
                     placeholder="Enter starting address"
                     required
+                    autoComplete="off"
                   />
                 </div>
+                {activeField === 'current' && suggestions.current.length > 0 && (
+                  <div className="planner-suggestions-dropdown">
+                    {suggestions.current.map((s, idx) => (
+                      <div key={idx} className="planner-suggestion-item" onMouseDown={() => handleSelectSuggestion('current', s)}>
+                        {s}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="planner-input-group">
+              <div className="planner-input-group relative-position">
                 <label className="planner-input-lbl">PICKUP LOCATION</label>
                 <div className="planner-input-wrapper">
                   <FiMapPin className="input-icon-left text-blue" />
                   <input 
                     type="text" 
                     value={inputs.pickupLocation}
-                    onChange={e => setInputs({ ...inputs, pickupLocation: e.target.value })}
+                    onChange={e => handleFetchSuggestions('pickup', e.target.value)}
+                    onFocus={() => setActiveField('pickup')}
+                    onBlur={() => setTimeout(() => setActiveField(null), 250)}
                     placeholder="Enter pickup address"
                     required
+                    autoComplete="off"
                   />
                 </div>
+                {activeField === 'pickup' && suggestions.pickup.length > 0 && (
+                  <div className="planner-suggestions-dropdown">
+                    {suggestions.pickup.map((s, idx) => (
+                      <div key={idx} className="planner-suggestion-item" onMouseDown={() => handleSelectSuggestion('pickup', s)}>
+                        {s}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="planner-input-group">
+              <div className="planner-input-group relative-position">
                 <label className="planner-input-lbl">DROPOFF LOCATION</label>
                 <div className="planner-input-wrapper">
                   <FiMapPin className="input-icon-left text-green" />
                   <input 
                     type="text" 
                     value={inputs.dropoffLocation}
-                    onChange={e => setInputs({ ...inputs, dropoffLocation: e.target.value })}
+                    onChange={e => handleFetchSuggestions('dropoff', e.target.value)}
+                    onFocus={() => setActiveField('dropoff')}
+                    onBlur={() => setTimeout(() => setActiveField(null), 250)}
                     placeholder="Enter destination address"
                     required
+                    autoComplete="off"
                   />
                 </div>
+                {activeField === 'dropoff' && suggestions.dropoff.length > 0 && (
+                  <div className="planner-suggestions-dropdown">
+                    {suggestions.dropoff.map((s, idx) => (
+                      <div key={idx} className="planner-suggestion-item" onMouseDown={() => handleSelectSuggestion('dropoff', s)}>
+                        {s}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="planner-row-inputs">
@@ -258,24 +374,56 @@ const TripPlanner = ({ onTabChange, onEldSolved }) => {
                 <div className="preview-node-item">
                   <span className="node-marker start"></span>
                   <div className="node-details">
-                    <span className="node-title">Start: Chicago Terminal</span>
+                    <span className="node-title">Start: Depart Terminal</span>
                     <span className="node-address">{inputs.currentLocation}</span>
                   </div>
                 </div>
-                <div className="preview-node-item">
-                  <span className="node-marker pickup"></span>
-                  <div className="node-details">
-                    <span className="node-title">Pickup: Logistics Hub Point</span>
-                    <span className="node-address">{inputs.pickupLocation}</span>
-                  </div>
-                </div>
-                <div className="preview-node-item">
-                  <span className="node-marker dropoff"></span>
-                  <div className="node-details">
-                    <span className="node-title">End: Denver Logistics Park</span>
-                    <span className="node-address">{inputs.dropoffLocation}</span>
-                  </div>
-                </div>
+
+                {plannedStops.length > 0 ? (
+                  plannedStops.map((stop, idx) => {
+                    let markerClass = "dropoff";
+                    let title = "Stop";
+                    if (stop.type === 'pickup') {
+                      markerClass = "pickup";
+                      title = "Pickup Stop";
+                    } else if (stop.type === 'fuel') {
+                      markerClass = "fuel";
+                      title = "Fuel Stop";
+                    } else if (stop.type === 'rest') {
+                      markerClass = "rest";
+                      title = "Mandatory Rest Break";
+                    } else if (stop.type === 'dropoff') {
+                      markerClass = "dropoff";
+                      title = "Destination Dropoff";
+                    }
+                    return (
+                      <div className="preview-node-item" key={idx}>
+                        <span className={`node-marker ${markerClass}`}></span>
+                        <div className="node-details">
+                          <span className="node-title">{title} ({stop.duration_hrs}h)</span>
+                          <span className="node-address">{stop.location}</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <>
+                    <div className="preview-node-item">
+                      <span className="node-marker pickup"></span>
+                      <div className="node-details">
+                        <span className="node-title">Pickup: Logistics Hub Point</span>
+                        <span className="node-address">{inputs.pickupLocation}</span>
+                      </div>
+                    </div>
+                    <div className="preview-node-item">
+                      <span className="node-marker dropoff"></span>
+                      <div className="node-details">
+                        <span className="node-title">End: Denver Logistics Park</span>
+                        <span className="node-address">{inputs.dropoffLocation}</span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

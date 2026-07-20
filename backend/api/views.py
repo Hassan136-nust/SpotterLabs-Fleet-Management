@@ -4,6 +4,7 @@ from rest_framework import status
 from .serializers import TripPlanRequestSerializer
 from .services.routing import geocode_address, get_hgv_route
 from .services.hos_engine import plan_trip
+from .models import TripDispatch
 
 class PlanTripAPIView(APIView):
     def post(self, request, *args, **kwargs):
@@ -29,7 +30,6 @@ class PlanTripAPIView(APIView):
             )
             
         # 2. Get route legs combined distance & duration
-        # We query directions between current -> pickup and pickup -> dropoff
         leg1_route = get_hgv_route(
             [current_coords['lat'], current_coords['lon']],
             [pickup_coords['lat'], pickup_coords['lon']]
@@ -77,9 +77,52 @@ class PlanTripAPIView(APIView):
             # Inject geometry for map polyline overlay
             trip_plan['route_geometry'] = combined_route['geometry']
             
+            # Save the dispatch to the database
+            drive_hours_sum = sum(leg['drive_hours'] for leg in trip_plan['legs'])
+            final_day = trip_plan['daily_logs'][-1]
+            final_event = final_day['events'][-1] if final_day['events'] else None
+            eta_time = final_event['start'] if final_event else '06:00 PM'
+            
+            dispatch_record = TripDispatch.objects.create(
+                current_location=current_coords['display_name'],
+                pickup_location=pickup_coords['display_name'],
+                dropoff_location=dropoff_coords['display_name'],
+                cycle_hours=cycle_used,
+                distance_miles=trip_plan['total_miles'],
+                drive_hours=drive_hours_sum,
+                eta=eta_time,
+                eta_date=final_day['date'],
+                stops_data=trip_plan['stops'],
+                logs_data=trip_plan['daily_logs'],
+                route_geometry=trip_plan['route_geometry']
+            )
+            
+            # Include db record id in response
+            trip_plan['dispatch_id'] = dispatch_record.id
+            
             return Response(trip_plan, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
                 {"error": f"Failed to run HOS simulation engine: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class HistoryAPIView(APIView):
+    def get(self, request, *args, **kwargs):
+        dispatches = TripDispatch.objects.all().order_by('-created_at')
+        records = []
+        for d in dispatches:
+            records.append({
+                "id": d.id,
+                "current_location": d.current_location,
+                "pickup_location": d.pickup_location,
+                "dropoff_location": d.dropoff_location,
+                "cycle_hours": d.cycle_hours,
+                "distance_miles": d.distance_miles,
+                "drive_hours": d.drive_hours,
+                "eta": d.eta,
+                "eta_date": d.eta_date,
+                "created_at": d.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            })
+        return Response(records, status=status.HTTP_200_OK)
+
