@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FiSearch, 
   FiBell, 
@@ -27,12 +27,64 @@ const STATUS_COLORS = {
   ON: '#F59E0B'   // amber
 };
 
+// Default Mock Logs (FMCSA compliant)
+const defaultMockLogs = [
+  {
+    dayNumber: 1,
+    dateString: '05/24/2026',
+    total_miles_today: 432,
+    totals: { off_duty: 12.5, sleeper: 2.0, driving: 8.0, on_duty: 1.5 },
+    intervals: [
+      { status: 'OFF', durationMin: 360 }, // 12:00 AM - 06:00 AM
+      { status: 'ON', durationMin: 30 },   // 06:00 AM - 06:30 AM
+      { status: 'D', durationMin: 300 },    // 06:30 AM - 11:30 AM
+      { status: 'SB', durationMin: 120 },   // 11:30 AM - 01:30 PM
+      { status: 'D', durationMin: 180 },    // 01:30 PM - 04:30 PM
+      { status: 'ON', durationMin: 60 },    // 04:30 PM - 05:30 PM
+      { status: 'OFF', durationMin: 390 }   // 05:30 PM - 12:00 AM
+    ],
+    remarks: [
+      "00:00 - Chicago Hub, IL (start, off duty)",
+      "06:00 - Chicago Hub, IL (pre-trip, on duty)",
+      "06:30 - Chicago Hub, IL (depart, driving)",
+      "11:30 - Love's Travel Stop, IA (fuel/rest, sleeper berth)",
+      "13:30 - Love's Travel Stop, IA (resume, driving)",
+      "16:30 - Des Moines, IA (delivery, on duty)",
+      "17:30 - Pilot Rest Area, IA (10hr reset, off duty)"
+    ]
+  },
+  {
+    dayNumber: 2,
+    dateString: '05/25/2026',
+    total_miles_today: 310,
+    totals: { off_duty: 14.0, sleeper: 2.0, driving: 6.0, on_duty: 2.0 },
+    intervals: [
+      { status: 'OFF', durationMin: 600 }, // 12:00 AM - 10:00 AM
+      { status: 'ON', durationMin: 30 },   // 10:00 AM - 10:30 AM
+      { status: 'D', durationMin: 360 },    // 10:30 AM - 04:30 PM
+      { status: 'ON', durationMin: 90 },    // 04:30 PM - 06:00 PM
+      { status: 'OFF', durationMin: 360 }   // 06:00 PM - 12:00 AM
+    ],
+    remarks: [
+      "00:00 - Pilot Rest Area, IA (start, off duty)",
+      "10:00 - Pilot Rest Area, IA (pre-trip, on duty)",
+      "10:30 - Pilot Rest Area, IA (depart, driving)",
+      "16:30 - Omaha, NE (unload, on duty)",
+      "18:00 - Pilot Plaza Omaha, NE (10hr reset, off duty)"
+    ]
+  }
+];
+
 const ELDLogsPage = ({ onTabChange, eldResult }) => {
   const hasRealData = eldResult && eldResult.dailyLogs && eldResult.dailyLogs.length > 0;
   
   const [selectedDayIdx, setSelectedDayIdx] = useState(0);
-  const [localLogs, setLocalLogs] = useState([]);
-  const [prevEldResult, setPrevEldResult] = useState(null);
+  const [localLogs, setLocalLogs] = useState(() => {
+    if (eldResult && eldResult.dailyLogs && eldResult.dailyLogs.length > 0) {
+      return eldResult.dailyLogs;
+    }
+    return defaultMockLogs;
+  });
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
@@ -41,63 +93,14 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
   const [newRemarkLocation, setNewRemarkLocation] = useState('');
   const [newRemarkNote, setNewRemarkNote] = useState('');
 
-  // Default Mock Logs (FMCSA compliant)
-  const defaultMockLogs = [
-    {
-      dayNumber: 1,
-      dateString: '05/24/2026',
-      total_miles_today: 432,
-      totals: { off_duty: 12.5, sleeper: 2.0, driving: 8.0, on_duty: 1.5 },
-      intervals: [
-        { status: 'OFF', durationMin: 360 }, // 12:00 AM - 06:00 AM
-        { status: 'ON', durationMin: 30 },   // 06:00 AM - 06:30 AM
-        { status: 'D', durationMin: 300 },    // 06:30 AM - 11:30 AM
-        { status: 'SB', durationMin: 120 },   // 11:30 AM - 01:30 PM
-        { status: 'D', durationMin: 180 },    // 01:30 PM - 04:30 PM
-        { status: 'ON', durationMin: 60 },    // 04:30 PM - 05:30 PM
-        { status: 'OFF', durationMin: 390 }   // 05:30 PM - 12:00 AM
-      ],
-      remarks: [
-        "00:00 - Chicago Hub, IL (start, off duty)",
-        "06:00 - Chicago Hub, IL (pre-trip, on duty)",
-        "06:30 - Chicago Hub, IL (depart, driving)",
-        "11:30 - Love's Travel Stop, IA (fuel/rest, sleeper berth)",
-        "13:30 - Love's Travel Stop, IA (resume, driving)",
-        "16:30 - Des Moines, IA (delivery, on duty)",
-        "17:30 - Pilot Rest Area, IA (10hr reset, off duty)"
-      ]
-    },
-    {
-      dayNumber: 2,
-      dateString: '05/25/2026',
-      total_miles_today: 310,
-      totals: { off_duty: 14.0, sleeper: 2.0, driving: 6.0, on_duty: 2.0 },
-      intervals: [
-        { status: 'OFF', durationMin: 600 }, // 12:00 AM - 10:00 AM
-        { status: 'ON', durationMin: 30 },   // 10:00 AM - 10:30 AM
-        { status: 'D', durationMin: 360 },    // 10:30 AM - 04:30 PM
-        { status: 'ON', durationMin: 90 },    // 04:30 PM - 06:00 PM
-        { status: 'OFF', durationMin: 360 }   // 06:00 PM - 12:00 AM
-      ],
-      remarks: [
-        "00:00 - Pilot Rest Area, IA (start, off duty)",
-        "10:00 - Pilot Rest Area, IA (pre-trip, on duty)",
-        "10:30 - Pilot Rest Area, IA (depart, driving)",
-        "16:30 - Omaha, NE (unload, on duty)",
-        "18:00 - Pilot Plaza Omaha, NE (10hr reset, off duty)"
-      ]
-    }
-  ];
-
   // Sync state with props changes
-  if (eldResult !== prevEldResult) {
-    setPrevEldResult(eldResult);
+  useEffect(() => {
     if (hasRealData) {
       setLocalLogs(eldResult.dailyLogs);
     } else {
       setLocalLogs(defaultMockLogs);
     }
-  }
+  }, [eldResult, hasRealData]);
 
   // Active day calculations
   const currentDay = localLogs[selectedDayIdx] || (localLogs.length > 0 ? localLogs[0] : null);
