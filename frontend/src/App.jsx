@@ -15,6 +15,33 @@ function App() {
   // Shared ELD calculation results so the ELD Logs tab can display them!
   const [eldResult, setEldResult] = useState(null);
 
+  // Centered Trip Plan State for persistence across tab changes
+  const [tripPlanState, setTripPlanState] = useState({
+    inputs: {
+      currentLocation: 'Detecting location...',
+      pickupLocation: '',
+      dropoffLocation: '',
+      cycleHours: '70',
+      departureDate: new Date().toISOString().split('T')[0]
+    },
+    locations: {
+      current: null,
+      pickup: null,
+      dropoff: null
+    },
+    routeGeometry: null,
+    metrics: {
+      distance: 0,
+      driveTime: 0,
+      eta: '—',
+      etaDate: '—',
+      remainingCycle: 70,
+      fuelStops: 0,
+      restStops: 0
+    },
+    plannedStops: []
+  });
+
   const handleTabChange = (tabName) => {
     setActiveTab(tabName);
     window.scrollTo(0, 0);
@@ -31,11 +58,18 @@ function App() {
           <TripPlanner 
             onTabChange={handleTabChange} 
             onEldSolved={(result) => setEldResult(result)}
+            tripPlanState={tripPlanState}
+            setTripPlanState={setTripPlanState}
           />
         );
 
       case 'routes':
-        return <RoutesPage onTabChange={handleTabChange} />;
+        return (
+          <RoutesPage 
+            onTabChange={handleTabChange} 
+            tripPlanState={tripPlanState}
+          />
+        );
         
       case 'eld-logs':
         return (

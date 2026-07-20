@@ -20,9 +20,11 @@ import Sidebar from './Sidebar';
 import MapContainer from './MapContainer';
 import './RoutesPage.css';
 
-const RoutesPage = ({ onTabChange }) => {
-  // Coords for Chicago to Denver route display on map
-  const routeGeometry = {
+const RoutesPage = ({ onTabChange, tripPlanState }) => {
+  const hasActiveRoute = tripPlanState && tripPlanState.routeGeometry;
+
+  // Centralized or fallback routes parameters
+  const defaultRouteGeometry = {
     type: 'LineString',
     coordinates: [
       [-87.6298, 41.8781], // Chicago
@@ -32,10 +34,29 @@ const RoutesPage = ({ onTabChange }) => {
     ]
   };
 
-  const locations = {
+  const defaultLocations = {
     current: { lat: 41.8781, lon: -87.6298, displayName: 'Chicago Hub' },
     pickup: { lat: 41.6005, lon: -93.6091, displayName: 'Archer Logistics' },
     dropoff: { lat: 39.7392, lon: -104.9903, displayName: 'Global Cold Storage' }
+  };
+
+  const routeGeometry = hasActiveRoute ? tripPlanState.routeGeometry : defaultRouteGeometry;
+  const locations = hasActiveRoute ? tripPlanState.locations : defaultLocations;
+  const stops = hasActiveRoute ? tripPlanState.plannedStops : [];
+  const metrics = hasActiveRoute ? tripPlanState.metrics : {
+    distance: 1012,
+    driveTime: 14.5,
+    eta: '04:30 PM',
+    etaDate: 'OCT 24',
+    remainingCycle: 3.7
+  };
+
+  // Convert decimal remaining HOS cycle hours to HH:MM format
+  const formatCycle = (decimalHours) => {
+    if (isNaN(decimalHours) || decimalHours <= 0) return "00:00";
+    const hrs = Math.floor(decimalHours);
+    const mins = Math.round((decimalHours - hrs) * 60);
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -78,11 +99,12 @@ const RoutesPage = ({ onTabChange }) => {
               pickupLoc={locations.pickup}
               dropoffLoc={locations.dropoff}
               routeGeometry={routeGeometry}
+              stops={stops}
             />
 
             {/* Floating Info Overlays on Map */}
             <div className="map-float-card-route">
-              <span className="route-alpha-title">ROUTE ALPHA-7</span>
+              <span className="route-alpha-title">{hasActiveRoute ? 'ACTIVE DISPATCH' : 'ROUTE ALPHA-7'}</span>
             </div>
 
             <div className="map-float-stats-row">
@@ -95,9 +117,9 @@ const RoutesPage = ({ onTabChange }) => {
             </div>
 
             <div className="map-float-waypoints-overlay">
-              <div className="waypoint-item"><span className="waypoint-letter">A</span> 1. Depart waypoint A</div>
-              <div className="waypoint-item"><span className="waypoint-letter">C</span> 2. Ascend sector C</div>
-              <div className="waypoint-item"><span className="waypoint-letter">D</span> 3. Navigate plains D</div>
+              <div className="waypoint-item"><span className="waypoint-letter">A</span> 1. Depart terminal</div>
+              <div className="waypoint-item"><span className="waypoint-letter">C</span> 2. Cargo loading stop</div>
+              <div className="waypoint-item"><span className="waypoint-letter">D</span> 3. Navigate destination</div>
             </div>
 
             <div className="map-controls-floating-right">
@@ -110,23 +132,23 @@ const RoutesPage = ({ onTabChange }) => {
           <section className="routes-stats-strip-grid">
             <div className="routes-stat-card">
               <span className="routes-stat-lbl">TOTAL DISTANCE</span>
-              <span className="routes-stat-val">1,012 <span className="stat-unit">MILES</span></span>
+              <span className="routes-stat-val">{metrics.distance.toLocaleString()} <span className="stat-unit">MILES</span></span>
             </div>
             
             <div className="routes-stat-card">
               <span className="routes-stat-lbl">EST. DRIVE TIME</span>
-              <span className="routes-stat-val">14.5 <span className="stat-unit">HRS</span></span>
+              <span className="routes-stat-val">{metrics.driveTime} <span className="stat-unit">HRS</span></span>
             </div>
             
             <div className="routes-stat-card border-orange-left">
               <span className="routes-stat-lbl">REMAINING CYCLE</span>
-              <span className="routes-stat-val text-orange-val">03:42 <span className="stat-unit">H:M</span></span>
+              <span className="routes-stat-val text-orange-val">{formatCycle(metrics.remainingCycle)} <span className="stat-unit">H:M</span></span>
             </div>
             
             <div className="routes-stat-card">
               <span className="routes-stat-lbl">ARRIVAL TIME</span>
-              <span className="routes-stat-val">OCT 24</span>
-              <span className="routes-stat-sub">04:30 PM MDT</span>
+              <span className="routes-stat-val">{metrics.etaDate}</span>
+              <span className="routes-stat-sub">{metrics.eta} MDT</span>
             </div>
           </section>
 
@@ -143,87 +165,132 @@ const RoutesPage = ({ onTabChange }) => {
               </div>
 
               <div className="route-nodes-detailed-list">
-                {/* Node 1 */}
-                <div className="node-detailed-item completed">
-                  <div className="node-status-check"><FiCheckCircle /></div>
-                  <div className="node-main-info">
-                    <h4 className="node-place-title">Start: Chicago Hub</h4>
-                    <span className="node-place-sub">Terminal 4, Gate B-12</span>
-                  </div>
-                  <div className="node-time-info">
-                    <span className="node-time-val">06:00 AM</span>
-                    <span className="node-time-status text-green-status">COMPLETED</span>
-                  </div>
-                </div>
+                {hasActiveRoute && stops.length > 0 ? (
+                  stops.map((stop, idx) => {
+                    let markerClass = "planned";
+                    let title = "Stop";
+                    let checkEl = <span className="bullet-grey"></span>;
 
-                {/* Node 2 */}
-                <div className="node-detailed-item completed">
-                  <div className="node-status-check"><FiCheckCircle /></div>
-                  <div className="node-main-info">
-                    <h4 className="node-place-title">Pickup: Archer Logistics</h4>
-                    <span className="node-place-sub">1422 Industrial Way, Naperville IL</span>
-                  </div>
-                  <div className="node-time-info">
-                    <span className="node-time-val">07:45 AM</span>
-                    <span className="node-time-status text-green-status">COMPLETED</span>
-                  </div>
-                </div>
+                    if (stop.type === 'start') {
+                      markerClass = "completed";
+                      title = "Start Terminal";
+                      checkEl = <FiCheckCircle />;
+                    } else if (stop.type === 'pickup') {
+                      markerClass = "completed";
+                      title = "Pickup Stop";
+                      checkEl = <FiCheckCircle />;
+                    } else if (stop.type === 'fuel') {
+                      markerClass = "upcoming";
+                      title = "Fuel Stop";
+                      checkEl = <span className="bullet-pulse-orange"></span>;
+                    } else if (stop.type === 'rest') {
+                      markerClass = "planned";
+                      title = stop.location.includes("30m") ? "30-Min Rest Break" : "10-Hr Reset Break";
+                      checkEl = <span className="bullet-grey"></span>;
+                    } else if (stop.type === 'dropoff') {
+                      markerClass = "last-node";
+                      title = "Destination Dropoff";
+                      checkEl = <FiMapPin />;
+                    }
 
-                {/* Node 3 */}
-                <div className="node-detailed-item upcoming">
-                  <div className="node-status-check"><span className="bullet-pulse-orange"></span></div>
-                  <div className="node-main-info">
-                    <h4 className="node-place-title">Fuel Stop: Love's Travel Stop</h4>
-                    <span className="node-place-sub">I-80 Exit 242, Iowa City</span>
-                    <div className="fuel-tag-badge">
-                      Price: $4.12/gal (Network Preferred)
+                    return (
+                      <div className={`node-detailed-item ${stop.type === 'dropoff' ? 'last-node' : markerClass}`} key={idx}>
+                        <div className="node-status-check">{checkEl}</div>
+                        <div className="node-main-info">
+                          <h4 className="node-place-title">{title}</h4>
+                          <span className="node-place-sub">{stop.location}</span>
+                        </div>
+                        <div className="node-time-info">
+                          <span className="node-time-val">{stop.duration_hrs} Hrs</span>
+                          <span className="node-time-status text-orange-status">{stop.status}</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <>
+                    {/* Node 1 */}
+                    <div className="node-detailed-item completed">
+                      <div className="node-status-check"><FiCheckCircle /></div>
+                      <div className="node-main-info">
+                        <h4 className="node-place-title">Start: Chicago Hub</h4>
+                        <span className="node-place-sub">Terminal 4, Gate B-12</span>
+                      </div>
+                      <div className="node-time-info">
+                        <span className="node-time-val">06:00 AM</span>
+                        <span className="node-time-status text-green-status">COMPLETED</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="node-time-info">
-                    <span className="node-time-val">11:15 AM</span>
-                    <span className="node-time-status text-orange-status">UPCOMING</span>
-                  </div>
-                </div>
 
-                {/* Node 4 */}
-                <div className="node-detailed-item planned">
-                  <div className="node-status-check"><span className="bullet-grey"></span></div>
-                  <div className="node-main-info">
-                    <h4 className="node-place-title">30-Min Rest Break</h4>
-                    <span className="node-place-sub">Rest Area #12, Des Moines West</span>
-                  </div>
-                  <div className="node-time-info">
-                    <span className="node-time-val">02:30 PM</span>
-                    <span className="node-time-status">PLANNED</span>
-                  </div>
-                </div>
+                    {/* Node 2 */}
+                    <div className="node-detailed-item completed">
+                      <div className="node-status-check"><FiCheckCircle /></div>
+                      <div className="node-main-info">
+                        <h4 className="node-place-title">Pickup: Archer Logistics</h4>
+                        <span className="node-place-sub">1422 Industrial Way, Naperville IL</span>
+                      </div>
+                      <div className="node-time-info">
+                        <span className="node-time-val">07:45 AM</span>
+                        <span className="node-time-status text-green-status">COMPLETED</span>
+                      </div>
+                    </div>
 
-                {/* Node 5 */}
-                <div className="node-detailed-item planned">
-                  <div className="node-status-check"><span className="bullet-grey"></span></div>
-                  <div className="node-main-info">
-                    <h4 className="node-place-title">10-Hr Reset: Pilot Flying J</h4>
-                    <span className="node-place-sub">Omaha Northwest, NE</span>
-                  </div>
-                  <div className="node-time-info">
-                    <span className="node-time-val">06:00 PM</span>
-                    <span className="node-time-status">PLANNED</span>
-                  </div>
-                </div>
+                    {/* Node 3 */}
+                    <div className="node-detailed-item upcoming">
+                      <div className="node-status-check"><span className="bullet-pulse-orange"></span></div>
+                      <div className="node-main-info">
+                        <h4 className="node-place-title">Fuel Stop: Love's Travel Stop</h4>
+                        <span className="node-place-sub">I-80 Exit 242, Iowa City</span>
+                        <div className="fuel-tag-badge">
+                          Price: $4.12/gal (Network Preferred)
+                        </div>
+                      </div>
+                      <div className="node-time-info">
+                        <span className="node-time-val">11:15 AM</span>
+                        <span className="node-time-status text-orange-status">UPCOMING</span>
+                      </div>
+                    </div>
 
-                {/* Node 6 */}
-                <div className="node-detailed-item last-node">
-                  <div className="node-status-check"><FiMapPin /></div>
-                  <div className="node-main-info">
-                    <h4 className="node-place-title">Dropoff: Global Cold Storage</h4>
-                    <span className="node-place-sub">8800 Aurora Ave, Denver CO</span>
-                  </div>
-                  <div className="node-time-info">
-                    <span className="node-time-val">04:30 PM</span>
-                    <span className="node-time-status">OCT 24</span>
-                  </div>
-                </div>
+                    {/* Node 4 */}
+                    <div className="node-detailed-item planned">
+                      <div className="node-status-check"><span className="bullet-grey"></span></div>
+                      <div className="node-main-info">
+                        <h4 className="node-place-title">30-Min Rest Break</h4>
+                        <span className="node-place-sub">Rest Area #12, Des Moines West</span>
+                      </div>
+                      <div className="node-time-info">
+                        <span className="node-time-val">02:30 PM</span>
+                        <span className="node-time-status">PLANNED</span>
+                      </div>
+                    </div>
 
+                    {/* Node 5 */}
+                    <div className="node-detailed-item planned">
+                      <div className="node-status-check"><span className="bullet-grey"></span></div>
+                      <div className="node-main-info">
+                        <h4 className="node-place-title">10-Hr Reset: Pilot Flying J</h4>
+                        <span className="node-place-sub">Omaha Northwest, NE</span>
+                      </div>
+                      <div className="node-time-info">
+                        <span className="node-time-val">06:00 PM</span>
+                        <span className="node-time-status">PLANNED</span>
+                      </div>
+                    </div>
+
+                    {/* Node 6 */}
+                    <div className="node-detailed-item last-node">
+                      <div className="node-status-check"><FiMapPin /></div>
+                      <div className="node-main-info">
+                        <h4 className="node-place-title">Dropoff: Global Cold Storage</h4>
+                        <span className="node-place-sub">8800 Aurora Ave, Denver CO</span>
+                      </div>
+                      <div className="node-time-info">
+                        <span className="node-time-val">04:30 PM</span>
+                        <span className="node-time-status">OCT 24</span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

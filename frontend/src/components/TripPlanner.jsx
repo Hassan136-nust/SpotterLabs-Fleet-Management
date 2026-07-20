@@ -16,39 +16,51 @@ import { geocodeAddress, getRoute } from '../services/api';
 import { solveELDLogs } from '../utils/eldSolver';
 import './TripPlanner.css';
 
-const TripPlanner = ({ onTabChange, onEldSolved }) => {
-  const [inputs, setInputs] = useState({
-    currentLocation: 'Detecting location...',
-    pickupLocation: '',
-    dropoffLocation: '',
-    cycleHours: '70',
-    departureDate: new Date().toISOString().split('T')[0] // default to today
-  });
+const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState }) => {
+  const { inputs, locations, routeGeometry, metrics, plannedStops } = tripPlanState;
+
+  // centralized state setters
+  const setInputs = (valOrFn) => {
+    setTripPlanState(prev => ({
+      ...prev,
+      inputs: typeof valOrFn === 'function' ? valOrFn(prev.inputs) : valOrFn
+    }));
+  };
+
+  const setLocations = (valOrFn) => {
+    setTripPlanState(prev => ({
+      ...prev,
+      locations: typeof valOrFn === 'function' ? valOrFn(prev.locations) : valOrFn
+    }));
+  };
+
+  const setRouteGeometry = (valOrFn) => {
+    setTripPlanState(prev => ({
+      ...prev,
+      routeGeometry: typeof valOrFn === 'function' ? valOrFn(prev.routeGeometry) : valOrFn
+    }));
+  };
+
+  const setMetrics = (valOrFn) => {
+    setTripPlanState(prev => ({
+      ...prev,
+      metrics: typeof valOrFn === 'function' ? valOrFn(prev.metrics) : valOrFn
+    }));
+  };
+
+  const setPlannedStops = (valOrFn) => {
+    setTripPlanState(prev => ({
+      ...prev,
+      plannedStops: typeof valOrFn === 'function' ? valOrFn(prev.plannedStops) : valOrFn
+    }));
+  };
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Map and calculation states
-  const [locations, setLocations] = useState({
-    current: null,
-    pickup: null,
-    dropoff: null
-  });
-  const [routeGeometry, setRouteGeometry] = useState(null);
-  const [metrics, setMetrics] = useState({
-    distance: 0,
-    driveTime: 0,
-    eta: '—',
-    etaDate: '—',
-    remainingCycle: 70,
-    fuelStops: 0,
-    restStops: 0
-  });
-
-  // Autocomplete and Dynamic stops preview
+  // Autocomplete and Dynamic suggestions
   const [suggestions, setSuggestions] = useState({ current: [], pickup: [], dropoff: [] });
   const [activeField, setActiveField] = useState(null);
-  const [plannedStops, setPlannedStops] = useState([]);
 
   // Fetch suggestions from Photon API (free, OpenStreetMap data)
   const handleFetchSuggestions = async (field, query) => {
