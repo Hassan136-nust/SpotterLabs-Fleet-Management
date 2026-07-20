@@ -1,0 +1,560 @@
+/* ELD Logs Page Stylesheet */
+
+.eld-page-layout {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  background-color: #0b0705;
+  color: #e2e8f0;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.eld-main-panel {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+
+/* Top Header */
+.eld-top-header {
+  height: 56px;
+  background-color: #120c09;
+  border-bottom: 1px solid #2b201a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+
+.eld-title-container {
+  display: flex;
+  align-items: center;
+}
+
+.eld-page-header-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.eld-search-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #1a120e;
+  border: 1px solid #2b201a;
+  padding: 6px 14px;
+  border-radius: 8px;
+  width: 280px;
+}
+
+.eld-search-icon {
+  color: #8c7365;
+  font-size: 1rem;
+}
+
+.eld-search-input {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  outline: none;
+  width: 100%;
+}
+
+.eld-search-input::placeholder {
+  color: #8c7365;
+}
+
+.eld-hdr-widgets {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.system-compliant-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #10b981;
+  letter-spacing: 0.05em;
+  background-color: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.eld-bell-widget {
+  background-color: #1a120e;
+  border: 1px solid #2b201a;
+  color: #b09e95;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.eld-bell-widget:hover {
+  color: #ff6b00;
+  border-color: #ff6b00;
+  background-color: #241b16;
+}
+
+.eld-user-widget-detailed {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.eld-user-info {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.eld-username {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.eld-user-role {
+  font-size: 0.5625rem;
+  color: #8c7365;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.eld-avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #2b201a;
+  color: #b09e95;
+  border: 1px solid #2b201a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8125rem;
+}
+
+/* Viewport Content */
+.eld-content-viewport {
+  flex-grow: 1;
+  padding: 24px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* 1. Clocks Stats row */
+.eld-clocks-strip-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1024px) {
+  .eld-clocks-strip-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .eld-clocks-strip-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.eld-clock-card {
+  background-color: #150f0c;
+  border: 1px solid #2b201a;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.eld-clock-card.border-orange { border-left: 3px solid #ff6b00; }
+.eld-clock-card.border-blue { border-left: 3px solid #3b82f6; }
+.eld-clock-card.border-white { border-left: 3px solid #ffffff; }
+.eld-clock-card.border-grey { border-left: 3px solid #64748b; }
+.eld-clock-card.border-cycle-orange { border-left: 3.5px double #ff6b00; }
+
+.eld-clock-lbl {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #8c7365;
+  letter-spacing: 0.05em;
+}
+
+.eld-clock-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.eld-clock-val.text-orange-val {
+  color: #ff6b00;
+}
+
+.clock-unit {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #8c7365;
+  margin-left: 2px;
+}
+
+.clock-progress-track {
+  height: 4px;
+  background-color: #2b201a;
+  border-radius: 2px;
+  width: 100%;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.clock-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.clock-progress-fill.bg-orange { background-color: #ff6b00; }
+.clock-progress-fill.bg-blue { background-color: #3b82f6; }
+.clock-progress-fill.bg-white { background-color: #ffffff; }
+.clock-progress-fill.bg-grey { background-color: #64748b; }
+
+/* 2. Main ELD graph card */
+.eld-graph-card-main {
+  background-color: #150f0c;
+  border: 1px solid #2b201a;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.eld-graph-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #2b201a;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.day-selector-tabs {
+  display: flex;
+  background-color: #0b0705;
+  border: 1px solid #2b201a;
+  padding: 4px;
+  border-radius: 6px;
+  gap: 4px;
+}
+
+.day-tab-btn {
+  background: none;
+  border: none;
+  color: #b09e95;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.day-tab-btn:hover {
+  color: #ffffff;
+}
+
+.day-tab-btn.active {
+  background-color: #ff6b00;
+  color: #ffffff;
+}
+
+.eld-graph-date-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.date-icon {
+  color: #ff6b00;
+}
+
+.eld-graph-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.eld-utility-btn {
+  background-color: #241b16;
+  border: 1px solid #2b201a;
+  color: #b09e95;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.eld-utility-btn:hover {
+  color: #ffffff;
+  border-color: #ff6b00;
+}
+
+/* SVG grid layouts */
+.eld-svg-graph-container-wrapper {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+
+.eld-y-axis-labels {
+  position: relative;
+  width: 90px;
+  height: 160px;
+  flex-shrink: 0;
+}
+
+.y-axis-lbl {
+  position: absolute;
+  left: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #8c7365;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.eld-svg-wrapper-relative {
+  flex-grow: 1;
+  min-width: 720px;
+  height: 200px;
+}
+
+.eld-grid-bg {
+  fill: #0d0806;
+  rx: 6;
+}
+
+.eld-row-guide-line {
+  stroke: rgba(255, 107, 0, 0.025);
+  stroke-width: 1;
+}
+
+.eld-grid-line-hour {
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1.5;
+}
+
+.eld-grid-line-half {
+  stroke: rgba(255, 255, 255, 0.03);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.eld-graph-lbl-txt {
+  fill: #8c7365;
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.eld-path-active-line {
+  fill: none;
+  stroke: #ff6b00;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 2px 8px rgba(255, 107, 0, 0.4));
+}
+
+.eld-path-point {
+  fill: #ffffff;
+  stroke: #ff6b00;
+  stroke-width: 2.5;
+}
+
+/* Bottom summary bar */
+.eld-graph-summaries-strip {
+  border-top: 1px solid #2b201a;
+  padding-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  text-align: center;
+}
+
+.summary-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-lbl {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #8c7365;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-val {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.summary-val.text-orange { color: #ff6b00; }
+.summary-val.text-blue { color: #3b82f6; }
+
+/* 3. Log Details & Annotations Card */
+.eld-annotations-card-large {
+  background-color: #150f0c;
+  border: 1px solid #2b201a;
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+}
+
+.annotations-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.annotations-title-widget {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.annotations-icon {
+  font-size: 1.1rem;
+  color: #ff6b00;
+}
+
+.annotations-title-widget h3 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+}
+
+.btn-add-remark {
+  background: none;
+  border: none;
+  color: #ff6b00;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.btn-add-remark:hover {
+  color: #e05e00;
+}
+
+/* Annotations Table Layout */
+.annotations-table-wrapper {
+  position: relative;
+  overflow-x: auto;
+  border: 1px solid #2b201a;
+  border-radius: 8px;
+}
+
+.annotations-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.annotations-table th {
+  background-color: #0b0705;
+  border-bottom: 1px solid #2b201a;
+  color: #8c7365;
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 12px 20px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.annotations-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #2b201a;
+  color: #ffffff;
+  font-size: 0.8125rem;
+}
+
+.annotations-table tr:last-child td {
+  border-bottom: none;
+}
+
+.bullet-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.bullet-dot.bg-white { background-color: #ffffff; }
+.bullet-dot.bg-grey { background-color: #64748b; }
+
+/* Floating Plus button on table */
+.floating-action-button-table {
+  position: absolute;
+  right: 20px;
+  bottom: -24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #ff6b00;
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4);
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.floating-action-button-table:hover {
+  background-color: #e05e00;
+  transform: scale(1.05);
+}
+
+.floating-action-button-table:active {
+  transform: scale(0.95);
+}

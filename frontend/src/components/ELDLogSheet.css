@@ -1,0 +1,148 @@
+.eld-sheet-card {
+  background-color: #12131a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.eld-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
+}
+
+.eld-day-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.eld-day-date {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.eld-grid-container {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.eld-row-labels {
+  position: relative;
+  width: 140px;
+  height: 160px;
+  flex-shrink: 0;
+}
+
+.eld-row-label-text {
+  position: absolute;
+  left: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.eld-svg-wrapper {
+  flex-grow: 1;
+  min-width: 750px;
+  height: 200px;
+}
+
+/* SVG Styling */
+.grid-rect-bg {
+  fill: #181922;
+  rx: 6;
+}
+
+.grid-row-line {
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 1;
+}
+
+.grid-line-hour {
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 1.5;
+}
+
+.grid-line-half {
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.grid-line-quarter {
+  stroke: rgba(255, 255, 255, 0.03);
+  stroke-width: 0.75;
+}
+
+.grid-label {
+  fill: #94a3b8;
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.eld-active-line {
+  fill: none;
+  stroke: #6366f1;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.5));
+}
+
+.eld-line-joint {
+  fill: #ffffff;
+  stroke: #6366f1;
+  stroke-width: 2.5;
+}
+
+/* Totals Cards */
+.eld-totals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.eld-total-box {
+  background-color: #1a1b26;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 12px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.eld-total-box.highlighted {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.eld-total-lbl {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.eld-total-box.highlighted .eld-total-lbl {
+  color: #c7d2fe;
+}
+
+.eld-total-val {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #ffffff;
+}

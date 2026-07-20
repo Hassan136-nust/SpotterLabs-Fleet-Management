@@ -1,0 +1,86 @@
+import React, { useState } from 'react';
+import TruckAnimation from './components/TruckAnimation';
+import Homepage from './components/Homepage';
+import TripPlanner from './components/TripPlanner';
+import RoutesPage from './components/RoutesPage';
+import ELDLogsPage from './components/ELDLogsPage';
+import Sidebar from './components/Sidebar';
+import './index.css';
+
+function App() {
+  const [showApp, setShowApp] = useState(false);
+  const [animationFinished, setAnimationFinished] = useState(false);
+  const [activeTab, setActiveTab] = useState('homepage');
+
+  // Shared ELD calculation results so the ELD Logs tab can display them!
+  const [eldResult, setEldResult] = useState(null);
+
+  const handleTabChange = (tabName) => {
+    setActiveTab(tabName);
+    window.scrollTo(0, 0);
+  };
+
+  // Render content based on current active tab
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'homepage':
+        return <Homepage onTabChange={handleTabChange} />;
+        
+      case 'plan-trip':
+        return (
+          <TripPlanner 
+            onTabChange={handleTabChange} 
+            onEldSolved={(result) => setEldResult(result)}
+          />
+        );
+
+      case 'routes':
+        return <RoutesPage onTabChange={handleTabChange} />;
+        
+      case 'eld-logs':
+        return (
+          <ELDLogsPage 
+            onTabChange={handleTabChange} 
+            eldResult={eldResult} 
+          />
+        );
+
+      default:
+        // Placeholder for other tabs (Routes, History, Settings)
+        return (
+          <div className="tab-page-container">
+            <Sidebar activeTab={activeTab} onTabChange={handleTabChange} />
+            <div className="tab-page-content">
+              <header className="tab-content-header">
+                <h2 className="tab-page-title" style={{ textTransform: 'capitalize' }}>{activeTab} Management</h2>
+                <p className="tab-page-subtitle">This section is currently being optimized by Spotter.ai's network engine.</p>
+              </header>
+              <div className="empty-state-card">
+                <span className="empty-state-icon">⚙️</span>
+                <h3>System Module Online</h3>
+                <p>Telemetry stream active. High-fidelity visualization for <strong>{activeTab}</strong> will be online shortly.</p>
+              </div>
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="app-root">
+      {showApp && renderTabContent()}
+      
+      {!animationFinished && (
+        <TruckAnimation 
+          onExitStart={() => {
+            setShowApp(true);
+            window.scrollTo(0, 0);
+          }}
+          onTransitionComplete={() => setAnimationFinished(true)} 
+        />
+      )}
+    </div>
+  );
+}
+
+export default App;

@@ -1,0 +1,306 @@
+import React from 'react';
+import { 
+  FiSearch, 
+  FiBell, 
+  FiUser, 
+  FiCheckCircle, 
+  FiInfo, 
+  FiMapPin, 
+  FiShare2, 
+  FiPrinter, 
+  FiCalendar, 
+  FiXCircle,
+  FiSend,
+  FiTrendingUp,
+  FiLayers,
+  FiTarget,
+  FiCpu
+} from 'react-icons/fi';
+import Sidebar from './Sidebar';
+import MapContainer from './MapContainer';
+import './RoutesPage.css';
+
+const RoutesPage = ({ onTabChange }) => {
+  // Coords for Chicago to Denver route display on map
+  const routeGeometry = {
+    type: 'LineString',
+    coordinates: [
+      [-87.6298, 41.8781], // Chicago
+      [-93.6091, 41.6005], // Des Moines
+      [-95.9345, 41.2565], // Omaha
+      [-104.9903, 39.7392] // Denver
+    ]
+  };
+
+  const locations = {
+    current: { lat: 41.8781, lon: -87.6298, displayName: 'Chicago Hub' },
+    pickup: { lat: 41.6005, lon: -93.6091, displayName: 'Archer Logistics' },
+    dropoff: { lat: 39.7392, lon: -104.9903, displayName: 'Global Cold Storage' }
+  };
+
+  return (
+    <div className="routes-page-layout">
+      {/* Sidebar Navigation */}
+      <Sidebar activeTab="routes" onTabChange={onTabChange} />
+
+      {/* Main Panel */}
+      <div className="routes-main-panel">
+        
+        {/* Top Navbar */}
+        <header className="routes-top-header">
+          <div className="routes-search-container">
+            <FiSearch className="routes-search-icon" />
+            <input 
+              type="text" 
+              placeholder="Search routes, drivers, or assets..." 
+              className="routes-search-input" 
+            />
+          </div>
+          <div className="routes-hdr-widgets">
+            <button className="routes-bell-widget"><FiBell /></button>
+            <div className="routes-user-widget-detailed">
+              <div className="routes-user-info">
+                <span className="routes-username">Marcus V.</span>
+                <span className="routes-user-role">LEAD DISPATCHER</span>
+              </div>
+              <div className="routes-avatar-circle">MV</div>
+            </div>
+          </div>
+        </header>
+
+        {/* Scrollable Content Viewport */}
+        <div className="routes-content-viewport">
+          
+          {/* 1. Map Panel Section */}
+          <section className="routes-map-container-section">
+            <MapContainer 
+              currentLoc={locations.current}
+              pickupLoc={locations.pickup}
+              dropoffLoc={locations.dropoff}
+              routeGeometry={routeGeometry}
+            />
+
+            {/* Floating Info Overlays on Map */}
+            <div className="map-float-card-route">
+              <span className="route-alpha-title">ROUTE ALPHA-7</span>
+            </div>
+
+            <div className="map-float-stats-row">
+              <div className="map-stat-badge">
+                <span className="green-pulse-dot"></span> VEHICLE LIVE: TRK-492
+              </div>
+              <div className="map-stat-badge orange-badge">
+                ⚡ 68 MPH
+              </div>
+            </div>
+
+            <div className="map-float-waypoints-overlay">
+              <div className="waypoint-item"><span className="waypoint-letter">A</span> 1. Depart waypoint A</div>
+              <div className="waypoint-item"><span className="waypoint-letter">C</span> 2. Ascend sector C</div>
+              <div className="waypoint-item"><span className="waypoint-letter">D</span> 3. Navigate plains D</div>
+            </div>
+
+            <div className="map-controls-floating-right">
+              <button className="map-ctrl-btn"><FiLayers /></button>
+              <button className="map-ctrl-btn"><FiTarget /></button>
+            </div>
+          </section>
+
+          {/* 2. Middle Stats Grid */}
+          <section className="routes-stats-strip-grid">
+            <div className="routes-stat-card">
+              <span className="routes-stat-lbl">TOTAL DISTANCE</span>
+              <span className="routes-stat-val">1,012 <span className="stat-unit">MILES</span></span>
+            </div>
+            
+            <div className="routes-stat-card">
+              <span className="routes-stat-lbl">EST. DRIVE TIME</span>
+              <span className="routes-stat-val">14.5 <span className="stat-unit">HRS</span></span>
+            </div>
+            
+            <div className="routes-stat-card border-orange-left">
+              <span className="routes-stat-lbl">REMAINING CYCLE</span>
+              <span className="routes-stat-val text-orange-val">03:42 <span className="stat-unit">H:M</span></span>
+            </div>
+            
+            <div className="routes-stat-card">
+              <span className="routes-stat-lbl">ARRIVAL TIME</span>
+              <span className="routes-stat-val">OCT 24</span>
+              <span className="routes-stat-sub">04:30 PM MDT</span>
+            </div>
+          </section>
+
+          {/* 3. Bottom Workspace Split */}
+          <div className="routes-bottom-workspace">
+            
+            {/* Left Box: Route Timeline */}
+            <div className="route-timeline-card-large">
+              <div className="timeline-card-header">
+                <h3 className="timeline-card-title">Route Timeline</h3>
+                <span className="timeline-badge-optimized">
+                  <FiCpu /> OPTIMIZED FOR FUEL
+                </span>
+              </div>
+
+              <div className="route-nodes-detailed-list">
+                {/* Node 1 */}
+                <div className="node-detailed-item completed">
+                  <div className="node-status-check"><FiCheckCircle /></div>
+                  <div className="node-main-info">
+                    <h4 className="node-place-title">Start: Chicago Hub</h4>
+                    <span className="node-place-sub">Terminal 4, Gate B-12</span>
+                  </div>
+                  <div className="node-time-info">
+                    <span className="node-time-val">06:00 AM</span>
+                    <span className="node-time-status text-green-status">COMPLETED</span>
+                  </div>
+                </div>
+
+                {/* Node 2 */}
+                <div className="node-detailed-item completed">
+                  <div className="node-status-check"><FiCheckCircle /></div>
+                  <div className="node-main-info">
+                    <h4 className="node-place-title">Pickup: Archer Logistics</h4>
+                    <span className="node-place-sub">1422 Industrial Way, Naperville IL</span>
+                  </div>
+                  <div className="node-time-info">
+                    <span className="node-time-val">07:45 AM</span>
+                    <span className="node-time-status text-green-status">COMPLETED</span>
+                  </div>
+                </div>
+
+                {/* Node 3 */}
+                <div className="node-detailed-item upcoming">
+                  <div className="node-status-check"><span className="bullet-pulse-orange"></span></div>
+                  <div className="node-main-info">
+                    <h4 className="node-place-title">Fuel Stop: Love's Travel Stop</h4>
+                    <span className="node-place-sub">I-80 Exit 242, Iowa City</span>
+                    <div className="fuel-tag-badge">
+                      Price: $4.12/gal (Network Preferred)
+                    </div>
+                  </div>
+                  <div className="node-time-info">
+                    <span className="node-time-val">11:15 AM</span>
+                    <span className="node-time-status text-orange-status">UPCOMING</span>
+                  </div>
+                </div>
+
+                {/* Node 4 */}
+                <div className="node-detailed-item planned">
+                  <div className="node-status-check"><span className="bullet-grey"></span></div>
+                  <div className="node-main-info">
+                    <h4 className="node-place-title">30-Min Rest Break</h4>
+                    <span className="node-place-sub">Rest Area #12, Des Moines West</span>
+                  </div>
+                  <div className="node-time-info">
+                    <span className="node-time-val">02:30 PM</span>
+                    <span className="node-time-status">PLANNED</span>
+                  </div>
+                </div>
+
+                {/* Node 5 */}
+                <div className="node-detailed-item planned">
+                  <div className="node-status-check"><span className="bullet-grey"></span></div>
+                  <div className="node-main-info">
+                    <h4 className="node-place-title">10-Hr Reset: Pilot Flying J</h4>
+                    <span className="node-place-sub">Omaha Northwest, NE</span>
+                  </div>
+                  <div className="node-time-info">
+                    <span className="node-time-val">06:00 PM</span>
+                    <span className="node-time-status">PLANNED</span>
+                  </div>
+                </div>
+
+                {/* Node 6 */}
+                <div className="node-detailed-item last-node">
+                  <div className="node-status-check"><FiMapPin /></div>
+                  <div className="node-main-info">
+                    <h4 className="node-place-title">Dropoff: Global Cold Storage</h4>
+                    <span className="node-place-sub">8800 Aurora Ave, Denver CO</span>
+                  </div>
+                  <div className="node-time-info">
+                    <span className="node-time-val">04:30 PM</span>
+                    <span className="node-time-status">OCT 24</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Right Box: Briefing, Asset, Grid */}
+            <div className="routes-right-widgets-column">
+              
+              {/* Card 1: Driver Briefing */}
+              <div className="driver-briefing-card">
+                <div className="briefing-header">
+                  <FiInfo className="briefing-info-icon" />
+                  <h3 className="briefing-title">Driver Briefing</h3>
+                </div>
+
+                <div className="briefing-sections-list">
+                  <div className="briefing-sec">
+                    <span className="briefing-sec-lbl">GATE PROCEDURE</span>
+                    <p className="briefing-sec-desc">
+                      Archer Logistics requires high-viz vest and hard hat. Enter via South Gate (Gate 4) only.
+                    </p>
+                  </div>
+                  
+                  <div className="briefing-sec">
+                    <span className="briefing-sec-lbl">LOAD SPECS</span>
+                    <p className="briefing-sec-desc">
+                      Frozen poultry. Maintain reefer at -5°F. Check temperature logs every 4 hours.
+                    </p>
+                  </div>
+
+                  {/* Send Button */}
+                  <button className="btn-push-to-eld">
+                    <FiSend className="btn-send-icon" /> PUSH TO ELD
+                  </button>
+
+                  <div className="briefing-sec border-top-divider">
+                    <span className="briefing-sec-lbl">WEATHER ALERT</span>
+                    <p className="briefing-sec-desc text-orange-desc">
+                      Strong crosswinds expected on I-80 through Nebraska. Advisory for light high-profile vehicles.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Assigned Asset */}
+              <div className="assigned-asset-card">
+                <span className="asset-header-lbl">ASSIGNED ASSET</span>
+                <div className="asset-details-widget">
+                  {/* Thumbnail representing truck */}
+                  <div className="truck-thumbnail-box">
+                    <span className="thumbnail-truck-icon">🚚</span>
+                  </div>
+                  <div className="asset-meta-details">
+                    <h4 className="asset-name-title">Unit 802</h4>
+                    <span className="asset-model-desc">2024 Peterbilt 579</span>
+                    <span className="asset-health-status">
+                      <span className="green-pulse-dot"></span> HEALTH: OPTIMAL
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3: Action Buttons Grid */}
+              <div className="action-buttons-grid-layout">
+                <button className="action-grid-btn"><FiShare2 className="grid-btn-icon" /> Share Link</button>
+                <button className="action-grid-btn"><FiPrinter className="grid-btn-icon" /> Manifest</button>
+                <button className="action-grid-btn"><FiCalendar className="grid-btn-icon" /> Reschedule</button>
+                <button className="action-grid-btn"><FiXCircle className="grid-btn-icon text-red" /> Cancel Route</button>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+export default RoutesPage;

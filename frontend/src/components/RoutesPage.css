@@ -1,0 +1,700 @@
+/* Routes Page Stylesheet */
+
+.routes-page-layout {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  background-color: #0b0705;
+  color: #e2e8f0;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.routes-main-panel {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+
+/* Top Header */
+.routes-top-header {
+  height: 56px;
+  background-color: #120c09;
+  border-bottom: 1px solid #2b201a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+
+.routes-search-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #1a120e;
+  border: 1px solid #2b201a;
+  padding: 6px 14px;
+  border-radius: 8px;
+  width: 320px;
+}
+
+.routes-search-icon {
+  color: #8c7365;
+  font-size: 1rem;
+}
+
+.routes-search-input {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  outline: none;
+  width: 100%;
+}
+
+.routes-search-input::placeholder {
+  color: #8c7365;
+}
+
+.routes-hdr-widgets {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.routes-bell-widget {
+  background-color: #1a120e;
+  border: 1px solid #2b201a;
+  color: #b09e95;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.routes-bell-widget:hover {
+  color: #ff6b00;
+  border-color: #ff6b00;
+  background-color: #241b16;
+}
+
+.routes-user-widget-detailed {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.routes-user-info {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.routes-username {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.routes-user-role {
+  font-size: 0.5625rem;
+  color: #8c7365;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.routes-avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #ff6b00;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8125rem;
+}
+
+/* Content Viewport */
+.routes-content-viewport {
+  flex-grow: 1;
+  padding: 24px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* 1. Map container section */
+.routes-map-container-section {
+  position: relative;
+  height: 300px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #2b201a;
+  margin-bottom: 24px;
+}
+
+.routes-map-container-section .map-wrapper {
+  height: 100%;
+  border-radius: 0;
+  border: none;
+}
+
+/* Map Floating Overlays */
+.map-float-card-route {
+  position: absolute;
+  top: 16px;
+  left: 56px;
+  z-index: 100;
+  background-color: #150f0c;
+  border: 1.5px solid #2b201a;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.route-alpha-title {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+}
+
+.map-float-stats-row {
+  position: absolute;
+  top: 16px;
+  left: 190px;
+  z-index: 100;
+  display: flex;
+  gap: 8px;
+}
+
+.map-stat-badge {
+  background-color: rgba(21, 15, 12, 0.9);
+  border: 1.5px solid #2b201a;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.map-stat-badge.orange-badge {
+  color: #ff6b00;
+}
+
+.green-pulse-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #10b981;
+}
+
+/* Map waypoints sidebar overlay */
+.map-float-waypoints-overlay {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  bottom: 16px;
+  z-index: 100;
+  background-color: rgba(21, 15, 12, 0.95);
+  border: 1.5px solid #2b201a;
+  border-radius: 8px;
+  padding: 16px 12px;
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .map-float-waypoints-overlay {
+    display: none;
+  }
+}
+
+.waypoint-item {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.waypoint-letter {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #2b201a;
+  color: #b09e95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.map-controls-floating-right {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.map-ctrl-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background-color: #1a120e;
+  border: 1px solid #2b201a;
+  color: #b09e95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.map-ctrl-btn:hover {
+  color: #ff6b00;
+  border-color: #ff6b00;
+  background-color: #241b16;
+}
+
+/* 2. Middle Stats strip */
+.routes-stats-strip-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .routes-stats-strip-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.routes-stat-card {
+  background-color: #150f0c;
+  border: 1px solid #2b201a;
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.routes-stat-card.border-orange-left {
+  border-left: 3px solid #ff6b00;
+}
+
+.routes-stat-lbl {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #8c7365;
+  letter-spacing: 0.05em;
+}
+
+.routes-stat-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.routes-stat-val.text-orange-val {
+  color: #ff6b00;
+}
+
+.stat-unit {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #8c7365;
+  margin-left: 2px;
+}
+
+.routes-stat-sub {
+  font-size: 0.625rem;
+  color: #8c7365;
+}
+
+/* 3. Bottom workspace split */
+.routes-bottom-workspace {
+  display: grid;
+  grid-template-columns: 1.4fr 0.86fr;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .routes-bottom-workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Left Box: Route Timeline */
+.route-timeline-card-large {
+  background-color: #150f0c;
+  border: 1px solid #2b201a;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.timeline-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #2b201a;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.timeline-card-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+}
+
+.timeline-badge-optimized {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #ff6b00;
+  letter-spacing: 0.05em;
+  background-color: rgba(255, 107, 0, 0.05);
+  border: 1px solid rgba(255, 107, 0, 0.15);
+  padding: 4px 10px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Detailed nodes vertical checklist */
+.route-nodes-detailed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  padding-left: 28px;
+}
+
+/* Vertical line */
+.route-nodes-detailed-list::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 10px;
+  bottom: 10px;
+  width: 1.5px;
+  background: repeating-linear-gradient(
+    to bottom,
+    #2b201a,
+    #2b201a 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.node-detailed-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+}
+
+.node-status-check {
+  position: absolute;
+  left: -28px;
+  top: 2px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background-color: #150f0c;
+}
+
+.node-detailed-item.completed .node-status-check {
+  color: #10b981;
+  font-size: 1.15rem;
+}
+
+.bullet-pulse-orange {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ff6b00;
+  box-shadow: 0 0 6px #ff6b00;
+  animation: pulse-dot 1.5s infinite;
+}
+
+.bullet-grey {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #2b201a;
+}
+
+.node-main-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-grow: 1;
+  padding-right: 16px;
+}
+
+.node-place-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.node-place-sub {
+  font-size: 0.75rem;
+  color: #8c7365;
+}
+
+.fuel-tag-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #ff6b00;
+  margin-top: 4px;
+}
+
+.node-time-info {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.node-time-val {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.node-time-status {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #8c7365;
+}
+
+.text-green-status { color: #10b981; }
+.text-orange-status { color: #ff6b00; }
+
+/* Right widgets column */
+.routes-right-widgets-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Card 1: Driver Briefing */
+.driver-briefing-card {
+  background-color: #150f0c;
+  border: 1px solid #2b201a;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.briefing-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.briefing-info-icon {
+  font-size: 1.1rem;
+  color: #ff6b00;
+}
+
+.briefing-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+}
+
+.briefing-sections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.briefing-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.briefing-sec-lbl {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #8c7365;
+  letter-spacing: 0.05em;
+}
+
+.briefing-sec-desc {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: #b09e95;
+  margin: 0;
+}
+
+.briefing-sec-desc.text-orange-desc {
+  color: #ff6b00;
+}
+
+.border-top-divider {
+  border-top: 1px solid #2b201a;
+  padding-top: 16px;
+}
+
+.btn-push-to-eld {
+  background-color: #ff6b00;
+  color: #ffffff;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+}
+
+.btn-push-to-eld:hover {
+  background-color: #e05e00;
+}
+
+.btn-send-icon {
+  font-size: 0.95rem;
+}
+
+/* Card 2: Assigned Asset */
+.assigned-asset-card {
+  background-color: #150f0c;
+  border: 1px solid #2b201a;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.asset-header-lbl {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #8c7365;
+  letter-spacing: 0.05em;
+}
+
+.asset-details-widget {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.truck-thumbnail-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  background-color: #2b201a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.asset-meta-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.asset-name-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.asset-model-desc {
+  font-size: 0.75rem;
+  color: #8c7365;
+}
+
+.asset-health-status {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Card 3: Action Buttons Grid */
+.action-buttons-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.action-grid-btn {
+  background-color: #150f0c;
+  border: 1px solid #2b201a;
+  border-radius: 8px;
+  padding: 12px;
+  color: #b09e95;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-grid-btn:hover {
+  color: #ffffff;
+  border-color: #ff6b00;
+  background-color: #241b16;
+}
+
+.grid-btn-icon {
+  font-size: 0.95rem;
+}
+
+.text-red {
+  color: #ef4444;
+}
+.action-grid-btn:hover .text-red {
+  color: #f87171;
+}

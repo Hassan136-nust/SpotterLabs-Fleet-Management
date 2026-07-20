@@ -1,0 +1,459 @@
+/* Trip Planner Stylesheet */
+
+.trip-planner-page-layout {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  background-color: #0b0705;
+  color: #e2e8f0;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.planner-main-panel {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+
+/* Top Header */
+.planner-top-header {
+  height: 56px;
+  background-color: #120c09;
+  border-bottom: 1px solid #2b201a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+
+.search-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #1a120e;
+  border: 1px solid #2b201a;
+  padding: 6px 14px;
+  border-radius: 8px;
+  width: 320px;
+}
+
+.search-bar-icon {
+  color: #8c7365;
+  font-size: 1rem;
+}
+
+.search-input-field {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  outline: none;
+  width: 100%;
+}
+
+.search-input-field::placeholder {
+  color: #8c7365;
+}
+
+.hdr-widgets {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hdr-bell-widget, .hdr-user-widget {
+  background-color: #1a120e;
+  border: 1px solid #2b201a;
+  color: #b09e95;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.hdr-bell-widget:hover, .hdr-user-widget:hover {
+  color: #ff6b00;
+  border-color: #ff6b00;
+  background-color: #241b16;
+}
+
+/* Workspace Split */
+.planner-workspace-split {
+  display: flex;
+  flex-grow: 1;
+  height: calc(100% - 56px);
+  width: 100%;
+}
+
+/* Form Panel */
+.planner-form-panel {
+  width: 380px;
+  background-color: #150f0c;
+  border-right: 1px solid #2b201a;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.planner-panel-header {
+  margin-bottom: 8px;
+}
+
+.planner-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 6px;
+}
+
+.planner-subtitle {
+  font-size: 0.75rem;
+  color: #8c7365;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Input Fields styling */
+.planner-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.planner-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.planner-input-lbl {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #8c7365;
+  letter-spacing: 0.05em;
+}
+
+.planner-input-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: #1a120e;
+  border: 1px solid #2b201a;
+  border-radius: 6px;
+  padding: 8px 12px;
+  gap: 10px;
+}
+
+.planner-input-wrapper input {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  outline: none;
+  width: 100%;
+}
+
+.planner-input-wrapper input::placeholder {
+  color: #523f35;
+}
+
+.planner-raw-input {
+  background-color: #1a120e;
+  border: 1px solid #2b201a;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  outline: none;
+}
+
+.planner-date-input {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  outline: none;
+  width: 100%;
+}
+
+.input-icon-left {
+  font-size: 1rem;
+}
+
+.input-icon-right {
+  color: #8c7365;
+  font-size: 0.95rem;
+}
+
+.text-orange { color: #ff6b00; }
+.text-blue { color: #3b82f6; }
+.text-green { color: #10b981; }
+
+.planner-row-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 12px;
+}
+
+.no-padding-left {
+  padding-left: 12px !important;
+}
+
+/* Button */
+.planner-btn-orange {
+  background-color: #ff6b00;
+  color: #ffffff;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 8px;
+  letter-spacing: 0.05em;
+}
+
+.planner-btn-orange:hover {
+  background-color: #e05e00;
+}
+
+.btn-cpu-icon {
+  font-size: 1rem;
+}
+
+.planner-error-box {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+/* Node Preview */
+.route-nodes-preview-section {
+  border-top: 1px solid #2b201a;
+  padding-top: 16px;
+  margin-top: 10px;
+}
+
+.preview-heading {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #8c7365;
+  letter-spacing: 0.05em;
+  margin: 0 0 16px;
+}
+
+.preview-nodes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  padding-left: 14px;
+}
+
+/* Vertical line connecting nodes */
+.preview-nodes-list::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  bottom: 6px;
+  width: 1.5px;
+  background: repeating-linear-gradient(
+    to bottom,
+    #2b201a,
+    #2b201a 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.preview-node-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+}
+
+.node-marker {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #2b201a;
+  position: absolute;
+  left: -14px;
+  top: 5px;
+  border: 1.5px solid #150f0c;
+}
+
+.node-marker.start { background-color: #ff6b00; box-shadow: 0 0 6px #ff6b00; }
+.node-marker.pickup { background-color: #3b82f6; }
+.node-marker.dropoff { background-color: #10b981; }
+
+.node-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.node-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.node-address {
+  font-size: 0.6875rem;
+  color: #8c7365;
+}
+
+/* Map Panel Container */
+.planner-map-panel {
+  flex-grow: 1;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Floating Actions on Map */
+.map-floating-actions {
+  position: absolute;
+  top: 16px;
+  left: 56px; /* Offset to not block Leaflet buttons if they overlap */
+  z-index: 100;
+  display: flex;
+  gap: 8px;
+}
+
+.map-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background-color: #1a120e;
+  border: 1px solid #2b201a;
+  color: #b09e95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.map-action-btn:hover {
+  color: #ff6b00;
+  border-color: #ff6b00;
+  background-color: #241b16;
+}
+
+/* Bottom Dashboard Metrics Bar Overlay */
+.map-bottom-dashboard-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: rgba(21, 15, 12, 0.95);
+  border-top: 1.5px solid #2b201a;
+  padding: 16px 24px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  backdrop-filter: blur(8px);
+}
+
+@media (max-width: 1024px) {
+  .map-bottom-dashboard-overlay {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+.metric-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-right: 1px solid #2b201a;
+  padding-right: 12px;
+}
+
+.metric-col:last-child {
+  border-right: none;
+}
+
+.metric-lbl {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #8c7365;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.metric-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.metric-sub-lbl {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #8c7365;
+}
+
+.metric-sub-lbl.text-green { color: #10b981; }
+.metric-sub-lbl.text-red { color: #ef4444; }
+
+/* Progress bar inside metric */
+.metric-progress-track {
+  height: 4px;
+  background-color: #2b201a;
+  border-radius: 2px;
+  width: 100%;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.metric-progress-fill {
+  height: 100%;
+  background-color: #ff6b00;
+  border-radius: 2px;
+}
+
+/* Dashed indicators for stops */
+.indicator-dashes {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.indicator-dashes .dash {
+  flex: 1;
+  height: 3px;
+  background-color: #2b201a;
+  border-radius: 1px;
+}
+
+.indicator-dashes .dash.active {
+  background-color: #ff6b00;
+}
