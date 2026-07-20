@@ -13,8 +13,9 @@
 
 .top-navbar {
   height: 64px;
-  background-color: #ea580c; /* Less bright, deeper orange */
-  border-bottom: none;
+  background-color: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid #f97316; /* Light orange border */
   position: sticky;
   top: 16px; /* Offset from the top to look floating */
   z-index: 1000;
@@ -80,8 +81,8 @@
 }
 
 .navbar-btn-orange {
-  background-color: #ffffff;
-  color: #f97316;
+  background-color: #f97316;
+  color: #ffffff;
   border: none;
   border-radius: 4px;
   padding: 8px 16px;
@@ -94,7 +95,7 @@
 }
 
 .navbar-btn-orange:hover {
-  background-color: #f1f5f9;
+  background-color: #ea580c;
 }
 
 /* Content Container */
