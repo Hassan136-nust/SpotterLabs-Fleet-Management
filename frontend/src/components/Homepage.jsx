@@ -86,7 +86,7 @@ const Homepage = ({ onTabChange }) => {
 
       <div className="content-container">
         {/* Stats Strip */}
-        <section className="stats-grid-row">
+        <section id="how-it-works" className="stats-grid-row">
           <div className="stat-box-item">
             <span className="stat-lbl-main">ROUTES PLANNED</span>
             <div className="stat-val-wrapper">
@@ -118,7 +118,7 @@ const Homepage = ({ onTabChange }) => {
         </section>
 
         {/* Core Capabilities Section */}
-        <section className="capabilities-centered-section">
+        <section id="features" className="capabilities-centered-section">
           <span className="section-label-orange">CORE CAPABILITIES</span>
           <h2 className="section-title-large">Engineered for Reliability</h2>
           <p className="section-subtitle-large">
@@ -212,7 +212,7 @@ const Homepage = ({ onTabChange }) => {
         </section>
 
         {/* CTA Section */}
-        <section className="cta-modern-section">
+        <section id="contact" className="cta-modern-section">
           <h2 className="cta-modern-title">Ready to modernize your dispatch?</h2>
           <p className="cta-modern-desc">
             Join thousands of fleet managers who trust Spotter.ai to handle the heavy lifting of logistics and compliance.
@@ -224,7 +224,7 @@ const Homepage = ({ onTabChange }) => {
         </section>
 
         {/* Footer */}
-        <footer className="footer-modern">
+        <footer id="documentation" className="footer-modern">
           <div className="footer-top-grid">
             <div className="footer-info-block">
               <div className="footer-brand-title">Spotter.ai</div>

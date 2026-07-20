@@ -1,4 +1,7 @@
 /* Redesigned Sidebar-Free Dashboard CSS */
+html {
+  scroll-behavior: smooth;
+}
 
 .dashboard-root-layout-no-sidebar {
   background-color: #060608;
