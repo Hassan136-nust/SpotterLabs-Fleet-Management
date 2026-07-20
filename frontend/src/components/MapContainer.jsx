@@ -71,17 +71,24 @@ const MapContainer = ({ currentLoc, pickupLoc, dropoffLoc, routeGeometry, stops 
 
     const bounds = [];
 
-    // Helper to create glowing HTML markers
-    const createCustomMarker = (latlng, color, label, title, initial) => {
+    // SVG icons definition (Feather Icons format)
+    const flagIcon = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>`;
+    const boxIcon = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>`;
+    const fuelIcon = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M3 22V2a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v20"></path><path d="M17 22h-2v-4a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v4H9"></path><circle cx="10" cy="7" r="2"></circle><path d="M19 5h1a1 1 0 0 1 1 1v5a2 2 0 0 1-2 2h-1"></path></svg>`;
+    const coffeeIcon = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>`;
+    const warehouseIcon = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`;
+
+    // Helper to create glowing HTML markers with SVGs
+    const createCustomMarker = (latlng, color, label, title, iconHtml) => {
       const customIcon = L.divIcon({
         className: 'custom-leaflet-marker-wrap',
         html: `
-          <div class="custom-map-marker-pulse" style="border-color: ${color}; box-shadow: 0 0 10px ${color};">
-            <div class="custom-map-marker-dot" style="background-color: ${color};"></div>
+          <div class="custom-map-marker-pulse" style="border-color: ${color}; box-shadow: 0 0 12px ${color}; background-color: ${color};">
+            <div class="custom-map-marker-icon-container">${iconHtml}</div>
           </div>
         `,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15]
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
       });
 
       const marker = L.marker(latlng, { icon: customIcon }).addTo(map);
@@ -106,43 +113,43 @@ const MapContainer = ({ currentLoc, pickupLoc, dropoffLoc, routeGeometry, stops 
         if (stop.lat && stop.lng) {
           let color = '#ff6b00';
           let title = 'STOP';
-          let initial = '•';
+          let iconHtml = '•';
 
           if (stop.type === 'start') {
             color = '#ff6b00';
             title = 'START TERMINAL';
-            initial = 'S';
+            iconHtml = flagIcon;
           } else if (stop.type === 'pickup') {
             color = '#3b82f6';
             title = 'PICKUP STOP';
-            initial = 'P';
+            iconHtml = boxIcon;
           } else if (stop.type === 'dropoff') {
             color = '#10b981';
             title = 'DESTINATION DROPOFF';
-            initial = 'D';
+            iconHtml = warehouseIcon;
           } else if (stop.type === 'fuel') {
             color = '#eab308';
             title = 'FUEL STOP';
-            initial = 'F';
+            iconHtml = fuelIcon;
           } else if (stop.type === 'rest') {
             color = '#64748b';
             title = 'REST STOP';
-            initial = 'R';
+            iconHtml = coffeeIcon;
           }
 
-          createCustomMarker([stop.lat, stop.lng], color, stop.location, title, initial);
+          createCustomMarker([stop.lat, stop.lng], color, stop.location, title, iconHtml);
         }
       });
     } else {
       // Fallback to primary markers
       if (currentLoc) {
-        createCustomMarker([currentLoc.lat, currentLoc.lon], '#ff6b00', currentLoc.displayName, 'START TERMINAL', 'S');
+        createCustomMarker([currentLoc.lat, currentLoc.lon], '#ff6b00', currentLoc.displayName, 'START TERMINAL', flagIcon);
       }
       if (pickupLoc) {
-        createCustomMarker([pickupLoc.lat, pickupLoc.lon], '#3b82f6', pickupLoc.displayName, 'PICKUP STOP', 'P');
+        createCustomMarker([pickupLoc.lat, pickupLoc.lon], '#3b82f6', pickupLoc.displayName, 'PICKUP STOP', boxIcon);
       }
       if (dropoffLoc) {
-        createCustomMarker([dropoffLoc.lat, dropoffLoc.lon], '#10b981', dropoffLoc.displayName, 'DESTINATION DROPOFF', 'D');
+        createCustomMarker([dropoffLoc.lat, dropoffLoc.lon], '#10b981', dropoffLoc.displayName, 'DESTINATION DROPOFF', warehouseIcon);
       }
     }
 
