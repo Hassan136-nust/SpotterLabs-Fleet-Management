@@ -152,7 +152,9 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
 
   events.forEach((event, index) => {
     const startY = GRAPH_Y[event.status] || GRAPH_Y.OFF;
-    const durationMin = timeToMinutes(event.end) - timeToMinutes(event.start);
+    const durationMin = event.durationMin !== undefined 
+      ? event.durationMin 
+      : (event.end && event.start ? (timeToMinutes(event.end) - timeToMinutes(event.start)) : 0);
     const endX = currentX + (durationMin * minWidth);
 
     if (index === 0) {
