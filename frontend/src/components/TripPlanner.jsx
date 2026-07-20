@@ -176,9 +176,13 @@ const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState
               OFF: day.totals.off_duty,
               SB: day.totals.sleeper
             },
-            intervals: day.events.map(ev => ({
+            // Full events with start, end, location for FMCSA grid rendering
+            events: day.events.map(ev => ({
               status: ev.status,
-              durationMin: Math.round(ev.hours * 60)
+              start: ev.start,
+              end: ev.end,
+              hours: ev.hours,
+              location: ev.location || 'En route'
             }))
           }))
         });

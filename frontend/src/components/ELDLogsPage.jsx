@@ -1,47 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FiSearch, 
-  FiBell, 
-  FiUser, 
-  FiCalendar, 
-  FiDownload, 
+  FiBell,
   FiPrinter, 
   FiFileText,
-  FiPlus
+  FiPlus,
+  FiChevronLeft,
+  FiChevronRight
 } from 'react-icons/fi';
 import Sidebar from './Sidebar';
 import './ELDLogsPage.css';
 
-// Fixed Row Order
-const GRAPH_Y = {
-  OFF: 20, // Row 1: Off Duty
-  SB: 60,  // Row 2: Sleeper Berth
-  D: 100,  // Row 3: Driving
-  ON: 140  // Row 4: On Duty (Not Driving)
-};
+// FMCSA Fixed Row Order and Y positioning
+// Each row is 40px tall, grid starts at y=0
+const HOUR_WIDTH = 40;   // 40px per hour
+const ROW_HEIGHT = 40;   // 40px per row
+const GRID_WIDTH = 960;  // 24 * 40
+const GRID_HEIGHT = 160; // 4 * 40
+
+// Row index 0=OFF, 1=SB, 2=D, 3=ON
+const ROW_INDEX = { OFF: 0, SB: 1, D: 2, ON: 3 };
+const ROW_LABELS = ['Off Duty', 'Sleeper Berth', 'Driving', 'On Duty (Not Drv.)'];
 
 const STATUS_COLORS = {
   OFF: '#4B5563', // gray
-  SB: '#7C3AED',  // purple
-  D: '#3B82F6',   // blue
-  ON: '#F59E0B'   // amber
+  SB:  '#7C3AED', // purple
+  D:   '#3B82F6', // blue
+  ON:  '#F59E0B'  // amber
 };
 
-// Default Mock Logs (FMCSA compliant)
+// Convert "HH:MM" or "24:00" to pixel X
+function timeToX(timeStr) {
+  if (!timeStr) return 0;
+  const [h, m] = timeStr.split(':').map(Number);
+  const totalHours = h + m / 60;
+  return Math.min(totalHours * HOUR_WIDTH, GRID_WIDTH);
+}
+
+// Default FMCSA-compliant mock logs shown before any trip is planned
 const defaultMockLogs = [
   {
     dayNumber: 1,
     dateString: '05/24/2026',
     total_miles_today: 432,
-    totals: { off_duty: 12.5, sleeper: 2.0, driving: 8.0, on_duty: 1.5 },
-    intervals: [
-      { status: 'OFF', durationMin: 360 }, // 12:00 AM - 06:00 AM
-      { status: 'ON', durationMin: 30 },   // 06:00 AM - 06:30 AM
-      { status: 'D', durationMin: 300 },    // 06:30 AM - 11:30 AM
-      { status: 'SB', durationMin: 120 },   // 11:30 AM - 01:30 PM
-      { status: 'D', durationMin: 180 },    // 01:30 PM - 04:30 PM
-      { status: 'ON', durationMin: 60 },    // 04:30 PM - 05:30 PM
-      { status: 'OFF', durationMin: 390 }   // 05:30 PM - 12:00 AM
+    totals: { OFF: 12.5, SB: 2.0, D: 8.0, ON: 1.5 },
+    events: [
+      { status: 'OFF', start: '00:00', end: '06:00', hours: 6.0,  location: 'Chicago Hub, IL' },
+      { status: 'ON',  start: '06:00', end: '06:30', hours: 0.5,  location: 'Chicago Hub, IL' },
+      { status: 'D',   start: '06:30', end: '11:30', hours: 5.0,  location: 'En route I-80' },
+      { status: 'SB',  start: '11:30', end: '13:30', hours: 2.0,  location: "Love's Travel Stop, IA" },
+      { status: 'D',   start: '13:30', end: '16:30', hours: 3.0,  location: 'En route I-80' },
+      { status: 'ON',  start: '16:30', end: '17:30', hours: 1.0,  location: 'Des Moines, IA' },
+      { status: 'OFF', start: '17:30', end: '24:00', hours: 6.5,  location: 'Pilot Rest Area, IA' },
     ],
     remarks: [
       "00:00 - Chicago Hub, IL (start, off duty)",
@@ -57,186 +67,260 @@ const defaultMockLogs = [
     dayNumber: 2,
     dateString: '05/25/2026',
     total_miles_today: 310,
-    totals: { off_duty: 14.0, sleeper: 2.0, driving: 6.0, on_duty: 2.0 },
-    intervals: [
-      { status: 'OFF', durationMin: 600 }, // 12:00 AM - 10:00 AM
-      { status: 'ON', durationMin: 30 },   // 10:00 AM - 10:30 AM
-      { status: 'D', durationMin: 360 },    // 10:30 AM - 04:30 PM
-      { status: 'ON', durationMin: 90 },    // 04:30 PM - 06:00 PM
-      { status: 'OFF', durationMin: 360 }   // 06:00 PM - 12:00 AM
+    totals: { OFF: 14.0, SB: 2.0, D: 6.0, ON: 2.0 },
+    events: [
+      { status: 'OFF', start: '00:00', end: '10:00', hours: 10.0, location: 'Pilot Rest Area, IA' },
+      { status: 'ON',  start: '10:00', end: '10:30', hours: 0.5,  location: 'Pilot Rest Area, IA' },
+      { status: 'D',   start: '10:30', end: '16:30', hours: 6.0,  location: 'En route I-80' },
+      { status: 'ON',  start: '16:30', end: '18:00', hours: 1.5,  location: 'Omaha, NE' },
+      { status: 'OFF', start: '18:00', end: '24:00', hours: 6.0,  location: 'Pilot Plaza, Omaha NE' },
     ],
     remarks: [
       "00:00 - Pilot Rest Area, IA (start, off duty)",
       "10:00 - Pilot Rest Area, IA (pre-trip, on duty)",
       "10:30 - Pilot Rest Area, IA (depart, driving)",
       "16:30 - Omaha, NE (unload, on duty)",
-      "18:00 - Pilot Plaza Omaha, NE (10hr reset, off duty)"
+      "18:00 - Pilot Plaza, Omaha NE (10hr reset, off duty)"
     ]
   }
 ];
 
-const ELDLogsPage = ({ onTabChange, eldResult }) => {
-  const hasRealData = eldResult && eldResult.dailyLogs && eldResult.dailyLogs.length > 0;
-  
-  const [selectedDayIdx, setSelectedDayIdx] = useState(0);
-  const [localLogs, setLocalLogs] = useState(() => {
-    if (eldResult && eldResult.dailyLogs && eldResult.dailyLogs.length > 0) {
-      return eldResult.dailyLogs;
+// ─── FMCSA ELD CANVAS SVG ────────────────────────────────────────────────────
+function ELDCanvas({ events }) {
+  if (!events || events.length === 0) {
+    return (
+      <svg viewBox={`-120 -30 ${GRID_WIDTH + 140} ${GRID_HEIGHT + 50}`} width="100%" height="100%">
+        <rect x={0} y={0} width={GRID_WIDTH} height={GRID_HEIGHT} fill="#0d0908" />
+        <text x={GRID_WIDTH / 2} y={GRID_HEIGHT / 2} textAnchor="middle" fill="#8c7365" fontSize="14">
+          No events — generate a trip to see ELD data
+        </text>
+      </svg>
+    );
+  }
+
+  // Build colored rectangles (one per event) and vertical drop lines
+  const blocks = [];
+  const dropLines = [];
+
+  events.forEach((ev, i) => {
+    const rowIdx = ROW_INDEX[ev.status] ?? ROW_INDEX.OFF;
+    const x1 = timeToX(ev.start);
+    const x2 = timeToX(ev.end);
+    const y  = rowIdx * ROW_HEIGHT;
+    const color = STATUS_COLORS[ev.status] || '#4B5563';
+
+    // Filled status block
+    blocks.push(
+      <rect
+        key={`block-${i}`}
+        x={x1}
+        y={y}
+        width={Math.max(x2 - x1, 0)}
+        height={ROW_HEIGHT}
+        fill={color}
+        opacity={0.85}
+      />
+    );
+
+    // Vertical drop line at the START of each block (status change marker)
+    if (i > 0) {
+      const prevRow = ROW_INDEX[events[i - 1].status] ?? 0;
+      const curRow  = rowIdx;
+      const yTop    = Math.min(prevRow, curRow) * ROW_HEIGHT;
+      const yBot    = (Math.max(prevRow, curRow) + 1) * ROW_HEIGHT;
+      dropLines.push(
+        <line
+          key={`drop-${i}`}
+          x1={x1} y1={yTop}
+          x2={x1} y2={yBot}
+          stroke="#ffffff"
+          strokeWidth={1.5}
+          strokeDasharray="none"
+        />
+      );
     }
-    return defaultMockLogs;
   });
 
-  // Modal State
-  const [showModal, setShowModal] = useState(false);
-  const [newRemarkStatus, setNewRemarkStatus] = useState('OFF');
-  const [newRemarkTime, setNewRemarkTime] = useState('12:00');
-  const [newRemarkLocation, setNewRemarkLocation] = useState('');
-  const [newRemarkNote, setNewRemarkNote] = useState('');
+  // Grid hour lines (vertical) + row dividers (horizontal)
+  const gridLines = [];
+  for (let h = 0; h <= 24; h++) {
+    const x = h * HOUR_WIDTH;
+    const isMajor = h % 6 === 0;
+    gridLines.push(
+      <line
+        key={`vl-${h}`}
+        x1={x} y1={0} x2={x} y2={GRID_HEIGHT}
+        stroke={isMajor ? '#4b3228' : '#2b201a'}
+        strokeWidth={isMajor ? 1.5 : 0.5}
+      />
+    );
+  }
+  for (let r = 0; r <= 4; r++) {
+    const y = r * ROW_HEIGHT;
+    gridLines.push(
+      <line
+        key={`hl-${r}`}
+        x1={0} y1={y} x2={GRID_WIDTH} y2={y}
+        stroke="#2b201a"
+        strokeWidth={r === 0 || r === 4 ? 1.5 : 1}
+      />
+    );
+  }
 
-  // Sync state with props changes
+  // Hour labels above grid
+  const hourLabels = [];
+  for (let h = 0; h <= 23; h++) {
+    const x = h * HOUR_WIDTH;
+    let label;
+    if (h === 0)  label = 'Mid';
+    else if (h === 12) label = 'Noon';
+    else if (h < 12) label = String(h);
+    else label = String(h);
+    hourLabels.push(
+      <text key={`lbl-${h}`} x={x + HOUR_WIDTH / 2} y={-10} textAnchor="middle" fill="#8c7365" fontSize="9" fontFamily="Inter,system-ui,sans-serif">
+        {label}
+      </text>
+    );
+  }
+
+  // Row labels on left
+  const rowLabelElems = ROW_LABELS.map((label, i) => (
+    <text
+      key={`rlbl-${i}`}
+      x={-8}
+      y={i * ROW_HEIGHT + ROW_HEIGHT / 2 + 4}
+      textAnchor="end"
+      fill="#b09e95"
+      fontSize="9"
+      fontFamily="Inter,system-ui,sans-serif"
+    >
+      {label}
+    </text>
+  ));
+
+  return (
+    <svg viewBox={`-120 -30 ${GRID_WIDTH + 140} ${GRID_HEIGHT + 50}`} width="100%" height="100%" style={{ display: 'block' }}>
+      {/* Background */}
+      <rect x={0} y={0} width={GRID_WIDTH} height={GRID_HEIGHT} fill="#0d0908" />
+
+      {/* Colored status blocks */}
+      {blocks}
+
+      {/* Grid lines on top */}
+      {gridLines}
+
+      {/* Vertical drop lines (status changes) */}
+      {dropLines}
+
+      {/* Row labels */}
+      {rowLabelElems}
+
+      {/* Hour labels */}
+      {hourLabels}
+    </svg>
+  );
+}
+
+// ─── MAIN ELD LOGS PAGE ───────────────────────────────────────────────────────
+const ELDLogsPage = ({ onTabChange, eldResult }) => {
+  const hasRealData = eldResult && eldResult.dailyLogs && eldResult.dailyLogs.length > 0;
+
+  const [selectedDayIdx, setSelectedDayIdx] = useState(0);
+  const [localLogs, setLocalLogs] = useState(() =>
+    hasRealData ? eldResult.dailyLogs : defaultMockLogs
+  );
+
+  // Modal state
+  const [showModal, setShowModal]               = useState(false);
+  const [newRemarkStatus, setNewRemarkStatus]   = useState('OFF');
+  const [newRemarkTime, setNewRemarkTime]       = useState('12:00');
+  const [newRemarkLocation, setNewRemarkLocation] = useState('');
+  const [newRemarkNote, setNewRemarkNote]       = useState('');
+
+  // Sync with real data when trip is planned
   useEffect(() => {
     if (hasRealData) {
       setLocalLogs(eldResult.dailyLogs);
+      setSelectedDayIdx(0);
     } else {
       setLocalLogs(defaultMockLogs);
     }
-  }, [eldResult, hasRealData]);
+  }, [eldResult]);
 
-  // Active day calculations
-  const currentDay = localLogs[selectedDayIdx] || (localLogs.length > 0 ? localLogs[0] : null);
-  
+  // Current day
+  const currentDay = localLogs[selectedDayIdx] || localLogs[0] || null;
+
   let currentDateString = '—';
-  let rawTotals = { off_duty: 12.0, sleeper: 0.0, driving: 0.0, on_duty: 0.0 };
-  let events = [];
+  let rawTotals   = { OFF: 0, SB: 0, D: 0, ON: 0 };
+  let events      = [];
   let totalMilesToday = 0;
   let remarksList = [];
 
   if (currentDay) {
-    // Format YYYY-MM-DD to MM/DD/YYYY
     if (currentDay.dateString && currentDay.dateString.includes('-')) {
-      const [y, m, d] = currentDay.dateString.split('-');
-      currentDateString = `${m}/${d}/${y}`;
+      const [y, mo, d] = currentDay.dateString.split('-');
+      currentDateString = `${mo}/${d}/${y}`;
     } else {
       currentDateString = currentDay.dateString || '—';
     }
-    
-    rawTotals = currentDay.totals || {};
-    events = currentDay.intervals || [];
+    // Support both naming conventions from backend
+    const t = currentDay.totals || {};
+    rawTotals = {
+      OFF: t.OFF ?? t.off_duty ?? 0,
+      SB:  t.SB  ?? t.sleeper  ?? 0,
+      D:   t.D   ?? t.driving  ?? 0,
+      ON:  t.ON  ?? t.on_duty  ?? 0,
+    };
+    events          = currentDay.events || [];
     totalMilesToday = currentDay.total_miles_today || 0;
-    remarksList = currentDay.remarks || [];
+    remarksList     = currentDay.remarks || [];
   }
 
-  // Map totals keys safely to match display standard
-  const totals = {
-    OFF: rawTotals.off_duty ?? rawTotals.OFF ?? 12.0,
-    SB: rawTotals.sleeper ?? rawTotals.SB ?? 0.0,
-    D: rawTotals.driving ?? rawTotals.D ?? 0.0,
-    ON: rawTotals.on_duty ?? rawTotals.ON ?? 0.0
-  };
+  const totalSum = rawTotals.OFF + rawTotals.SB + rawTotals.D + rawTotals.ON;
 
-  // Grid sizing parameters (FMCSA Official: 960px width, 160px height)
-  const width = 960;
-  const height = 160;
-  const hourWidth = 40; // 960 / 24 = 40px per hour
-  const minWidth = 960 / 1440; // 0.666px per minute
-
-  const timeToMinutes = (timeStr) => {
-    const [h, m] = timeStr.split(':').map(Number);
-    return h * 60 + m;
-  };
-
-  // Build the SVG path and tracking points
-  let pathD = '';
-  let currentX = 0;
-  const points = [];
-
-  events.forEach((event, index) => {
-    const startY = GRAPH_Y[event.status] || GRAPH_Y.OFF;
-    const durationMin = event.durationMin !== undefined 
-      ? event.durationMin 
-      : (event.end && event.start ? (timeToMinutes(event.end) - timeToMinutes(event.start)) : 0);
-    const endX = currentX + (durationMin * minWidth);
-
-    if (index === 0) {
-      pathD += `M ${currentX} ${startY}`;
-      points.push({ x: currentX, y: startY });
-    } else {
-      pathD += ` L ${currentX} ${startY}`;
-      points.push({ x: currentX, y: startY });
-    }
-
-    pathD += ` L ${endX} ${startY}`;
-    points.push({ x: endX, y: startY });
-
-    currentX = endX;
-  });
-
-  // Hour numbers labeled above the grid
-  const labels = [];
-  const gridLines = [];
-
-  for (let i = 0; i <= 24; i++) {
-    const x = i * hourWidth;
-    let label = i.toString();
-    if (i === 0) label = 'Midnight';
-    else if (i === 12) label = 'Noon';
-    else if (i === 24) label = ''; // grid ends at 24
-
-    labels.push(
-      <text key={`lbl-${i}`} x={x} y={-8} className="eld-graph-lbl-txt" textAnchor="middle">
-        {label}
-      </text>
-    );
-
-    gridLines.push(
-      <line key={`line-${i}`} x1={x} y1={0} x2={x} y2={height} className="eld-grid-line-hour" />
-    );
-
-    // Ticks at 30 minutes
-    if (i < 24) {
-      gridLines.push(
-        <line key={`tick-30-${i}`} x1={x + hourWidth / 2} y1={0} x2={x + hourWidth / 2} y2={height} className="eld-grid-line-half" />
-      );
-    }
-  }
-
-  // Format Helper for Hours display
   const formatHrs = (decimal) => {
-    const h = Math.floor(decimal);
-    const m = Math.round((decimal - h) * 60);
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    const h = Math.floor(Math.abs(decimal));
+    const m = Math.round((Math.abs(decimal) - h) * 60);
+    return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
   };
 
-  const totalSum = (totals.OFF + totals.SB + totals.D + totals.ON);
+  // Add remark handler — splits an existing event at the given time
+  const handleAddRemark = (e) => {
+    e.preventDefault();
+    const formatRemark = `${newRemarkTime} - ${newRemarkLocation} (${newRemarkStatus}: ${newRemarkNote})`;
+
+    const updated   = [...localLogs];
+    const cur       = { ...updated[selectedDayIdx] };
+    cur.remarks     = [...(cur.remarks || []), formatRemark];
+    updated[selectedDayIdx] = cur;
+    setLocalLogs(updated);
+    setShowModal(false);
+    setNewRemarkLocation('');
+    setNewRemarkNote('');
+  };
+
+  const prevDay = () => setSelectedDayIdx(i => Math.max(0, i - 1));
+  const nextDay = () => setSelectedDayIdx(i => Math.min(localLogs.length - 1, i + 1));
 
   return (
     <div className="eld-page-layout">
-      {/* Sidebar Navigation */}
       <Sidebar activeTab="eld-logs" onTabChange={onTabChange} />
 
-      {/* Main Panel */}
       <div className="eld-main-panel">
-        
+
         {/* Top Navbar */}
         <header className="eld-top-header">
           <div className="eld-title-container">
             <span className="eld-page-header-title">ELD Logs</span>
           </div>
-
           <div className="eld-search-container">
             <FiSearch className="eld-search-icon" />
-            <input 
-              type="text" 
-              placeholder="Search logs by driver, ID or truck..." 
-              className="eld-search-input" 
-            />
+            <input type="text" placeholder="Search logs by driver, ID or truck..." className="eld-search-input" />
           </div>
-
           <div className="eld-hdr-widgets">
             <div className="system-compliant-pill">
               <span className="green-pulse-dot"></span> FMCSA COMPLIANT
             </div>
-            <button className="eld-bell-widget"><FiBell /></button>
             <div className="eld-user-widget-detailed">
               <div className="eld-user-info">
                 <span className="eld-username">Alex Rivera</span>
@@ -247,183 +331,143 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
           </div>
         </header>
 
-        {/* Viewport Content */}
         <div className="eld-content-viewport">
-          
-          {/* 1. Clocks Stats row */}
+
+          {/* ── Clocks strip ── */}
           <section className="eld-clocks-strip-grid">
-            <div className="eld-clock-card border-off">
-              <span className="eld-clock-lbl">OFF DUTY</span>
-              <span className="eld-clock-val">{formatHrs(totals.OFF)} <span className="clock-unit">Hrs</span></span>
-              <div className="clock-progress-track"><div className="clock-progress-fill" style={{ backgroundColor: STATUS_COLORS.OFF, width: `${(totals.OFF / 24) * 100}%` }}></div></div>
-            </div>
-            
-            <div className="eld-clock-card border-sleeper">
-              <span className="eld-clock-lbl">SLEEPER BERTH</span>
-              <span className="eld-clock-val">{formatHrs(totals.SB)} <span className="clock-unit">Hrs</span></span>
-              <div className="clock-progress-track"><div className="clock-progress-fill" style={{ backgroundColor: STATUS_COLORS.SB, width: `${(totals.SB / 10) * 100}%` }}></div></div>
-            </div>
-
-            <div className="eld-clock-card border-driving">
-              <span className="eld-clock-lbl">DRIVING</span>
-              <span className="eld-clock-val">{formatHrs(totals.D)} <span className="clock-unit">Hrs</span></span>
-              <div className="clock-progress-track"><div className="clock-progress-fill" style={{ backgroundColor: STATUS_COLORS.D, width: `${(totals.D / 11) * 100}%` }}></div></div>
-            </div>
-
-            <div className="eld-clock-card border-on">
-              <span className="eld-clock-lbl">ON DUTY</span>
-              <span className="eld-clock-val">{formatHrs(totals.ON)} <span className="clock-unit">Hrs</span></span>
-              <div className="clock-progress-track"><div className="clock-progress-fill" style={{ backgroundColor: STATUS_COLORS.ON, width: `${(totals.ON / 14) * 100}%` }}></div></div>
-            </div>
-
-            <div className="eld-clock-card border-cycle-orange">
-              <span className="eld-clock-lbl">24-HOUR TOTAL</span>
-              <span className="eld-clock-val text-orange-val">{totalSum.toFixed(1)} <span className="clock-unit">Hrs</span></span>
-              <div className="clock-progress-track"><div className="clock-progress-fill bg-orange" style={{ width: '100%' }}></div></div>
-            </div>
+            {[
+              { lbl: 'OFF DUTY',      val: rawTotals.OFF, max: 24, color: STATUS_COLORS.OFF },
+              { lbl: 'SLEEPER BERTH', val: rawTotals.SB,  max: 10, color: STATUS_COLORS.SB  },
+              { lbl: 'DRIVING',       val: rawTotals.D,   max: 11, color: STATUS_COLORS.D   },
+              { lbl: 'ON DUTY (ND)',  val: rawTotals.ON,  max: 14, color: STATUS_COLORS.ON  },
+              { lbl: '24-HR TOTAL',   val: totalSum,      max: 24, color: '#ff6b00'         },
+            ].map(({ lbl, val, max, color }) => (
+              <div key={lbl} className="eld-clock-card" style={{ borderLeft: `3px solid ${color}` }}>
+                <span className="eld-clock-lbl">{lbl}</span>
+                <span className="eld-clock-val">{formatHrs(val)} <span className="clock-unit">Hrs</span></span>
+                <div className="clock-progress-track">
+                  <div className="clock-progress-fill" style={{ backgroundColor: color, width: `${Math.min((val / max) * 100, 100)}%` }} />
+                </div>
+              </div>
+            ))}
           </section>
 
-          {/* 2. Main ELD graph card */}
+          {/* ── FMCSA Log Sheet Card ── */}
           <section className="eld-graph-card-main">
+
+            {/* Card header: day nav + date + print */}
             <div className="eld-graph-card-header">
-              {/* Day Tabs */}
               <div className="day-selector-tabs">
+                <button className="day-nav-btn" onClick={prevDay} disabled={selectedDayIdx === 0}>
+                  <FiChevronLeft />
+                </button>
                 {localLogs.map((day, idx) => (
-                  <button 
-                    key={day.dayNumber || idx}
+                  <button
+                    key={idx}
                     className={`day-tab-btn ${selectedDayIdx === idx ? 'active' : ''}`}
                     onClick={() => setSelectedDayIdx(idx)}
                   >
-                    Day {day.dayNumber || (idx + 1)}
+                    Day {day.dayNumber || idx + 1}
                   </button>
                 ))}
+                <button className="day-nav-btn" onClick={nextDay} disabled={selectedDayIdx === localLogs.length - 1}>
+                  <FiChevronRight />
+                </button>
               </div>
-
-              {/* Action utilities */}
               <div className="eld-graph-actions">
-                <button className="eld-utility-btn" onClick={() => window.print()}><FiPrinter /> Print Log</button>
+                <button className="eld-utility-btn" onClick={() => window.print()}>
+                  <FiPrinter /> Print Log
+                </button>
               </div>
             </div>
 
             {/* FMCSA Official Header fields */}
             <div className="fmcsa-header-grid">
               <div className="fmcsa-header-cell">
-                <span className="cell-lbl">1. DATE</span>
+                <span className="cell-lbl">DATE</span>
                 <span className="cell-val">{currentDateString}</span>
               </div>
               <div className="fmcsa-header-cell">
-                <span className="cell-lbl">2. TOTAL MILES TODAY</span>
+                <span className="cell-lbl">TOTAL MILES TODAY</span>
                 <span className="cell-val">{totalMilesToday} mi</span>
               </div>
               <div className="fmcsa-header-cell">
-                <span className="cell-lbl">3. CARRIER NAME</span>
+                <span className="cell-lbl">CARRIER NAME</span>
                 <span className="cell-val">Spotter Labs Logistics LLC</span>
               </div>
               <div className="fmcsa-header-cell">
-                <span className="cell-lbl">4. MAIN OFFICE ADDRESS</span>
+                <span className="cell-lbl">MAIN OFFICE</span>
                 <span className="cell-val">Chicago, IL</span>
               </div>
               <div className="fmcsa-header-cell">
-                <span className="cell-lbl">5. VEHICLE NUMBER</span>
+                <span className="cell-lbl">VEHICLE NUMBER</span>
                 <span className="cell-val">TRK-492</span>
               </div>
               <div className="fmcsa-header-cell">
-                <span className="cell-lbl">6. CO-DRIVER NAME</span>
+                <span className="cell-lbl">CO-DRIVER</span>
                 <span className="cell-val">None</span>
               </div>
               <div className="fmcsa-header-cell">
-                <span className="cell-lbl">7. SHIPPING DOC #</span>
+                <span className="cell-lbl">SHIPPING DOC #</span>
                 <span className="cell-val">MANIFEST-81203</span>
               </div>
               <div className="fmcsa-header-cell">
-                <span className="cell-lbl">8. START TIME</span>
+                <span className="cell-lbl">START TIME</span>
                 <span className="cell-val">Midnight (00:00)</span>
               </div>
               <div className="fmcsa-header-cell cell-sig">
-                <span className="cell-lbl">9. DRIVER SIGNATURE</span>
+                <span className="cell-lbl">DRIVER SIGNATURE</span>
                 <span className="cell-val signature-text">Alex Rivera</span>
               </div>
             </div>
 
-            {/* SVG graph container with Y axis and Totals Column */}
+            {/* ── FMCSA Grid + Totals ── */}
             <div className="eld-canvas-layout-container">
-              
-              {/* Left Y-axis labels */}
-              <div className="eld-y-axis-labels">
-                <div className="y-axis-lbl" style={{ top: `${GRAPH_Y.OFF - 8}px` }}>OFF DUTY</div>
-                <div className="y-axis-lbl" style={{ top: `${GRAPH_Y.SB - 8}px` }}>SLEEPER</div>
-                <div className="y-axis-lbl" style={{ top: `${GRAPH_Y.D - 8}px` }}>DRIVING</div>
-                <div className="y-axis-lbl" style={{ top: `${GRAPH_Y.ON - 8}px` }}>ON DUTY</div>
-              </div>
-
-              {/* Center SVG Grid */}
+              {/* SVG Canvas */}
               <div className="eld-svg-wrapper-relative">
-                <svg viewBox={`-15 -20 ${width + 30} ${height + 30}`} width="100%" height="100%">
-                  {/* Grid background */}
-                  <rect x={0} y={0} width={width} height={height} className="eld-grid-bg" />
-                  
-                  {/* Horizontal status guide lines */}
-                  <line x1={0} y1={GRAPH_Y.OFF} x2={width} y2={GRAPH_Y.OFF} className="eld-row-guide-line" />
-                  <line x1={0} y1={GRAPH_Y.SB} x2={width} y2={GRAPH_Y.SB} className="eld-row-guide-line" />
-                  <line x1={0} y1={GRAPH_Y.D} x2={width} y2={GRAPH_Y.D} className="eld-row-guide-line" />
-                  <line x1={0} y1={GRAPH_Y.ON} x2={width} y2={GRAPH_Y.ON} className="eld-row-guide-line" />
-
-                  {/* Grid vertical lines & hour labels */}
-                  {gridLines}
-                  {labels}
-
-                  {/* The active HOS line path */}
-                  <path d={pathD} className="eld-path-active-line" />
-                  
-                  {/* Transition points */}
-                  {points.map((p, idx) => (
-                    <circle key={`pt-${idx}`} cx={p.x} cy={p.y} r={3} className="eld-path-point" />
-                  ))}
-                </svg>
+                <ELDCanvas events={events} />
               </div>
 
-              {/* Right-aligned Totals Column */}
-              <div className="eld-totals-column-layout">
-                <div className="totals-header-cell">TOTAL</div>
-                <div className="totals-val-row" style={{ top: `${GRAPH_Y.OFF - 16}px` }}>{totals.OFF.toFixed(1)}</div>
-                <div className="totals-val-row" style={{ top: `${GRAPH_Y.SB - 16}px` }}>{totals.SB.toFixed(1)}</div>
-                <div className="totals-val-row" style={{ top: `${GRAPH_Y.D - 16}px` }}>{totals.D.toFixed(1)}</div>
-                <div className="totals-val-row" style={{ top: `${GRAPH_Y.ON - 16}px` }}>{totals.ON.toFixed(1)}</div>
-                <div className="totals-footer-cell">{totalSum.toFixed(1)}</div>
+              {/* Right totals column */}
+              <div className="eld-totals-right-col">
+                <div className="totals-right-header">HRS</div>
+                {[
+                  { label: 'Off Duty',    val: rawTotals.OFF },
+                  { label: 'Sleeper',     val: rawTotals.SB  },
+                  { label: 'Driving',     val: rawTotals.D   },
+                  { label: 'On Duty (ND)',val: rawTotals.ON  },
+                ].map(({ label, val }) => (
+                  <div key={label} className="totals-right-row">
+                    <span className="totals-right-label">{label}</span>
+                    <span className="totals-right-val">{val.toFixed(1)}</span>
+                  </div>
+                ))}
+                <div className="totals-right-footer">
+                  <span className="totals-right-label">TOTAL</span>
+                  <span className="totals-right-val" style={{ color: Math.abs(totalSum - 24) < 0.1 ? '#10b981' : '#ef4444' }}>
+                    {totalSum.toFixed(1)} {Math.abs(totalSum - 24) < 0.1 ? '✓' : '✗'}
+                  </span>
+                </div>
               </div>
-
             </div>
 
-            {/* Bottom summaries grid inside card */}
+            {/* Summary strip */}
             <div className="eld-graph-summaries-strip">
-              <div className="summary-col">
-                <span className="summary-lbl">Total OFF</span>
-                <span className="summary-val">{formatHrs(totals.OFF)}</span>
-              </div>
-              <div className="summary-col">
-                <span className="summary-lbl">Total SB</span>
-                <span className="summary-val">{formatHrs(totals.SB)}</span>
-              </div>
-              <div className="summary-col">
-                <span className="summary-lbl">Total DR</span>
-                <span className="summary-val text-orange">{formatHrs(totals.D)}</span>
-              </div>
-              <div className="summary-col">
-                <span className="summary-lbl">Total ON</span>
-                <span className="summary-val text-blue">{formatHrs(totals.ON)}</span>
-              </div>
+              <div className="summary-col"><span className="summary-lbl">Total OFF</span><span className="summary-val">{formatHrs(rawTotals.OFF)}</span></div>
+              <div className="summary-col"><span className="summary-lbl">Total SB</span><span className="summary-val">{formatHrs(rawTotals.SB)}</span></div>
+              <div className="summary-col"><span className="summary-lbl">Total DR</span><span className="summary-val text-orange">{formatHrs(rawTotals.D)}</span></div>
+              <div className="summary-col"><span className="summary-lbl">Total ON</span><span className="summary-val text-blue">{formatHrs(rawTotals.ON)}</span></div>
             </div>
-
           </section>
 
-          {/* 3. Log Details & Annotations Card */}
+          {/* ── Remarks & Annotations ── */}
           <section className="eld-annotations-card-large">
             <div className="annotations-header">
               <div className="annotations-title-widget">
                 <FiFileText className="annotations-icon" />
-                <h3>Log Details & Annotations</h3>
+                <h3>Log Details &amp; Annotations</h3>
               </div>
-              <button className="btn-add-remark" onClick={() => setShowModal(true)}>Add Remark</button>
+              <button className="btn-add-remark" onClick={() => setShowModal(true)}>+ Add Remark</button>
             </div>
 
             <div className="annotations-table-wrapper">
@@ -431,191 +475,78 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
                 <thead>
                   <tr>
                     <th>STATUS</th>
-                    <th>START TIME</th>
-                    <th>LOCATION / REMARK DESCRIPTION</th>
-                    <th>DURATION</th>
-                    <th>NOTES / REMARKS</th>
+                    <th>START</th>
+                    <th>END</th>
+                    <th>LOCATION</th>
+                    <th>HOURS</th>
+                    <th>REMARKS</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {remarksList.length > 0 ? (
-                    remarksList.map((remark, idx) => {
-                      const parts = remark.split(' - ');
-                      const time = parts[0] || '—';
-                      const rest = parts[1] || '—';
-                      const loc = rest.split(' (')[0] || '—';
-                      const note = rest.includes('(') ? rest.substring(rest.indexOf('(')) : '—';
-                      
-                      let color = STATUS_COLORS.OFF;
-                      let statusText = "OFF DUTY";
-                      if (note.includes('ON') || note.includes('on')) {
-                        color = STATUS_COLORS.ON;
-                        statusText = "ON DUTY (ND)";
-                      } else if (note.includes('SB') || note.includes('sleeper')) {
-                        color = STATUS_COLORS.SB;
-                        statusText = "SLEEPER BERTH";
-                      } else if (note.includes('D') || note.includes('driving')) {
-                        color = STATUS_COLORS.D;
-                        statusText = "DRIVING";
-                      }
-
-                      return (
-                        <tr key={idx}>
-                          <td>
-                            <span className="status-label-badge" style={{ borderLeft: `4px solid ${color}`, paddingLeft: '8px' }}>
-                              {statusText}
-                            </span>
-                          </td>
-                          <td>{time}</td>
-                          <td>{loc}</td>
-                          <td>—</td>
-                          <td>{remark}</td>
-                        </tr>
-                      );
-                    })
+                  {events.length > 0 ? (
+                    events.map((ev, idx) => (
+                      <tr key={idx}>
+                        <td>
+                          <span
+                            className="status-label-badge"
+                            style={{ borderLeft: `4px solid ${STATUS_COLORS[ev.status] || '#4B5563'}`, paddingLeft: '8px' }}
+                          >
+                            {{ OFF: 'OFF DUTY', SB: 'SLEEPER BERTH', D: 'DRIVING', ON: 'ON DUTY (ND)' }[ev.status] || ev.status}
+                          </span>
+                        </td>
+                        <td>{ev.start || '—'}</td>
+                        <td>{ev.end   || '—'}</td>
+                        <td>{ev.location || '—'}</td>
+                        <td>{(ev.hours || 0).toFixed(2)} h</td>
+                        <td>{remarksList.find(r => r.startsWith(ev.start)) || '—'}</td>
+                      </tr>
+                    ))
                   ) : (
-                    <>
-                      <tr>
-                        <td><span className="bullet-dot bg-white"></span> OFF DUTY</td>
-                        <td>12:00 AM</td>
-                        <td>Chicago Hub, IL</td>
-                        <td>06h 00m</td>
-                        <td>Pre-trip prep next.</td>
-                      </tr>
-                      <tr>
-                        <td><span className="bullet-dot bg-grey"></span> SLEEPER</td>
-                        <td>11:30 AM</td>
-                        <td>Love's Travel Stop, IA</td>
-                        <td>02h 00m</td>
-                        <td>Mandatory rest break complete.</td>
-                      </tr>
-                    </>
+                    <tr>
+                      <td colSpan={6} style={{ textAlign: 'center', color: '#8c7365', padding: '32px' }}>
+                        No log data — plan a trip on the Trip Planner page first.
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>
 
-              {/* Floating Plus action button */}
-              <button className="floating-action-button-table" onClick={() => setShowModal(true)}><FiPlus /></button>
+              <button className="floating-action-button-table" onClick={() => setShowModal(true)}>
+                <FiPlus />
+              </button>
             </div>
           </section>
 
         </div>
-
       </div>
 
-      {/* Add Remark Modal Dialog overlay */}
+      {/* ── Add Remark Modal ── */}
       {showModal && (
-        <div className="eld-modal-overlay">
+        <div className="eld-modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
           <div className="eld-modal-container">
             <h3 className="modal-title">Add HOS Log Remark</h3>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const formatRemark = `${newRemarkTime} - ${newRemarkLocation} (${newRemarkStatus.toUpperCase()}: ${newRemarkNote})`;
-              const updated = [...localLogs];
-              const cur = { ...updated[selectedDayIdx] };
-              cur.remarks = [...(cur.remarks || []), formatRemark];
-              
-              // Also add a new status segment into intervals to visually update the grid!
-              const parseTime = (t) => {
-                const [h, m] = t.split(':').map(Number);
-                return h * 60 + m;
-              };
-              const targetMin = parseTime(newRemarkTime);
-              
-              // Split and rebuild intervals
-              let cumMin = 0;
-              const newIntervals = [];
-              let added = false;
-              
-              (cur.intervals || []).forEach(interval => {
-                const duration = interval.durationMin || 0;
-                if (!added && cumMin + duration >= targetMin) {
-                  // Split existing interval
-                  const leftDuration = targetMin - cumMin;
-                  const rightDuration = (cumMin + duration) - targetMin;
-                  
-                  if (leftDuration > 0) {
-                    newIntervals.push({ status: interval.status, durationMin: leftDuration });
-                  }
-                  // Insert the new status interval for 30 minutes
-                  newIntervals.push({ status: newRemarkStatus, durationMin: Math.min(30, rightDuration > 0 ? rightDuration : 30) });
-                  
-                  if (rightDuration - 30 > 0) {
-                    newIntervals.push({ status: interval.status, durationMin: rightDuration - 30 });
-                  }
-                  added = true;
-                } else {
-                  newIntervals.push(interval);
-                }
-                cumMin += duration;
-              });
-              
-              if (!added) {
-                newIntervals.push({ status: newRemarkStatus, durationMin: 30 });
-              }
-              
-              cur.intervals = newIntervals;
-              
-              // Recalculate totals based on new intervals
-              const newTotals = { OFF: 0, SB: 0, D: 0, ON: 0 };
-              newIntervals.forEach(intv => {
-                newTotals[intv.status] = (newTotals[intv.status] || 0) + (intv.durationMin / 60);
-              });
-              cur.totals = {
-                off_duty: newTotals.OFF,
-                sleeper: newTotals.SB,
-                driving: newTotals.D,
-                on_duty: newTotals.ON
-              };
-              
-              updated[selectedDayIdx] = cur;
-              setLocalLogs(updated);
-              setShowModal(false);
-              setNewRemarkLocation('');
-              setNewRemarkNote('');
-            }}>
+            <form onSubmit={handleAddRemark}>
               <div className="modal-form-group">
                 <label>STATUS TYPE</label>
-                <select value={newRemarkStatus} onChange={(e) => setNewRemarkStatus(e.target.value)}>
+                <select value={newRemarkStatus} onChange={e => setNewRemarkStatus(e.target.value)}>
                   <option value="OFF">OFF DUTY</option>
                   <option value="SB">SLEEPER BERTH</option>
                   <option value="D">DRIVING</option>
                   <option value="ON">ON DUTY (ND)</option>
                 </select>
               </div>
-
               <div className="modal-form-group">
-                <label>START TIME (HH:MM)</label>
-                <input 
-                  type="time" 
-                  value={newRemarkTime} 
-                  onChange={(e) => setNewRemarkTime(e.target.value)} 
-                  required 
-                />
+                <label>TIME (HH:MM)</label>
+                <input type="time" value={newRemarkTime} onChange={e => setNewRemarkTime(e.target.value)} required />
               </div>
-
               <div className="modal-form-group">
-                <label>LOCATION (CITY, STATE)</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. Des Moines, IA"
-                  value={newRemarkLocation} 
-                  onChange={(e) => setNewRemarkLocation(e.target.value)} 
-                  required 
-                />
+                <label>LOCATION (City, State)</label>
+                <input type="text" placeholder="e.g. Des Moines, IA" value={newRemarkLocation} onChange={e => setNewRemarkLocation(e.target.value)} required />
               </div>
-
               <div className="modal-form-group">
-                <label>REMARKS / NOTES</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. Routine Fuel Stop"
-                  value={newRemarkNote} 
-                  onChange={(e) => setNewRemarkNote(e.target.value)} 
-                  required 
-                />
+                <label>NOTES / REMARKS</label>
+                <input type="text" placeholder="e.g. Fuel stop" value={newRemarkNote} onChange={e => setNewRemarkNote(e.target.value)} required />
               </div>
-
               <div className="modal-actions-row">
                 <button type="button" className="btn-modal-cancel" onClick={() => setShowModal(false)}>Cancel</button>
                 <button type="submit" className="btn-modal-submit">Save Remark</button>

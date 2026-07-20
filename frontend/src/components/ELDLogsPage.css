@@ -807,3 +807,102 @@
     transform: translateY(0);
   }
 }
+
+/* ── FMCSA canvas layout ── */
+.eld-canvas-layout-container {
+  display: flex;
+  gap: 0;
+  width: 100%;
+  background-color: #0d0908;
+  border: 1px solid #2b201a;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.eld-svg-wrapper-relative {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+/* Right totals column */
+.eld-totals-right-col {
+  width: 130px;
+  flex-shrink: 0;
+  border-left: 1px solid #2b201a;
+  display: flex;
+  flex-direction: column;
+  background-color: #120c09;
+}
+
+.totals-right-header {
+  font-size: 0.5625rem;
+  font-weight: 800;
+  color: #8c7365;
+  letter-spacing: 0.08em;
+  text-align: center;
+  padding: 8px 0 4px;
+  border-bottom: 1px solid #2b201a;
+}
+
+.totals-right-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  border-bottom: 1px solid #2b201a;
+  flex: 1;
+}
+
+.totals-right-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-top: 2px solid #2b201a;
+  background-color: #150f0c;
+}
+
+.totals-right-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #8c7365;
+}
+
+.totals-right-val {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+/* Day nav buttons */
+.day-nav-btn {
+  background: none;
+  border: 1px solid #2b201a;
+  color: #8c7365;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 1rem;
+}
+
+.day-nav-btn:hover:not(:disabled) {
+  border-color: #ff6b00;
+  color: #ff6b00;
+}
+
+.day-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Remove old stale classes that conflict */
+.eld-y-axis-labels { display: none !important; }
+.eld-totals-column-layout { display: none !important; }
+
