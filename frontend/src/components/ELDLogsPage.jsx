@@ -167,54 +167,39 @@ function ELDCanvas({ events, forPrint = false }) {
       const col = colors[ev.status] || '#4B5563';
       const w   = Math.max(x2 - x1, 0);
 
-      // Main status fill
+      // Clean horizontal line
       blocks.push(
-        <rect key={`blk-${i}`} x={x1} y={y + 3} width={w} height={ROW_HEIGHT - 6}
-          fill={col} opacity={forPrint ? 0.75 : 0.88} rx={3} />
+        <rect key={`blk-${i}`} x={x1} y={y + ROW_HEIGHT / 2 - 2} width={w} height={4}
+          fill={col} opacity={forPrint ? 1 : 0.9} rx={2} />
       );
-      // Bright top accent stripe
+      // Dots at segment ends
       blocks.push(
-        <rect key={`top-${i}`} x={x1} y={y + 3} width={w} height={4}
-          fill={col} opacity={forPrint ? 1 : 1} rx={2} />
+        <circle key={`dot1-${i}`} cx={x1} cy={y + ROW_HEIGHT / 2} r={3} fill={col} />
+      );
+      blocks.push(
+        <circle key={`dot2-${i}`} cx={x2} cy={y + ROW_HEIGHT / 2} r={3} fill={col} />
       );
 
-      // Time range label inside block
-      if (w >= 44) {
+      // Clean, unified label above the line
+      if (w >= 65) {
         blocks.push(
-          <text key={`bt-${i}`} x={x1 + w / 2} y={y + ROW_HEIGHT / 2 + 4}
-            textAnchor="middle" fill="#ffffff" fontSize="9.5"
-            fontFamily="Inter,Arial,sans-serif" fontWeight="900">
-            {ev.start} – {ev.end}
+          <text key={`lbl-${i}`} x={x1 + w / 2} y={y + ROW_HEIGHT / 2 - 8}
+            textAnchor="middle" fill={lblC} fontSize="9.5"
+            fontFamily="Inter,Arial,sans-serif" fontWeight="600">
+            {ev.start} - {ev.end} ({fmtHrs(ev.hours)}h)
           </text>
         );
       }
 
-      // Duration label below block (if space)
-      if (w >= 50 && ev.hours) {
-        blocks.push(
-          <text key={`bh-${i}`} x={x1 + w / 2} y={y + ROW_HEIGHT - 6}
-            textAnchor="middle" fill="#ffffff" fontSize="8"
-            fontFamily="Inter,Arial,sans-serif" fontWeight="600" opacity={0.7}>
-            {fmtHrs(ev.hours)}h
-          </text>
-        );
-      }
-
-      // Vertical white drop line at status transition
+      // Vertical drop line at status transition
       if (i > 0) {
         const prevRowIdx = ROW_ORDER.indexOf(events[i - 1].status);
         if (prevRowIdx >= 0 && prevRowIdx !== rowIdx) {
-          const yTop = TOP_LABEL + Math.min(prevRowIdx, rowIdx) * ROW_HEIGHT + 3;
-          const yBot = TOP_LABEL + (Math.max(prevRowIdx, rowIdx) + 1) * ROW_HEIGHT - 3;
+          const yTop = TOP_LABEL + Math.min(prevRowIdx, rowIdx) * ROW_HEIGHT + ROW_HEIGHT / 2;
+          const yBot = TOP_LABEL + Math.max(prevRowIdx, rowIdx) * ROW_HEIGHT + ROW_HEIGHT / 2;
           dropLines.push(
             <line key={`dl-${i}`} x1={x1} y1={yTop} x2={x1} y2={yBot}
-              stroke={forPrint ? '#374151' : '#ffffff'} strokeWidth={2.5} opacity={0.9} />
-          );
-          // Diamond marker at transition
-          dropLines.push(
-            <polygon key={`dia-${i}`}
-              points={`${x1},${yTop - 4} ${x1 + 5},${yTop + 1} ${x1},${yTop + 6} ${x1 - 5},${yTop + 1}`}
-              fill={forPrint ? '#374151' : '#ffffff'} opacity={0.9} />
+              stroke={col} strokeWidth={2.5} opacity={forPrint ? 1 : 0.8} />
           );
         }
       }
