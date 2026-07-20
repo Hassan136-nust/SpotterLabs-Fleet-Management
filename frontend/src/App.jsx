@@ -69,6 +69,7 @@ function App() {
             onTabChange={handleTabChange} 
             tripPlanState={tripPlanState}
             setTripPlanState={setTripPlanState}
+            onEldSolved={(result) => setEldResult(result)}
           />
         );
         

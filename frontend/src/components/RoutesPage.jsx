@@ -20,7 +20,7 @@ import Sidebar from './Sidebar';
 import MapContainer from './MapContainer';
 import './RoutesPage.css';
 
-const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState }) => {
+const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState, onEldSolved }) => {
   const hasActiveRoute = tripPlanState && tripPlanState.routeGeometry;
 
   const routeGeometry = hasActiveRoute ? tripPlanState.routeGeometry : null;
@@ -114,6 +114,28 @@ const RoutesPage = ({ onTabChange, tripPlanState, setTripPlanState }) => {
         },
         plannedStops: data.stops
       }));
+
+      // Update ELD logs state
+      if (onEldSolved) {
+        onEldSolved({
+          dailyLogs: data.daily_logs.map(day => ({
+            dayNumber: day.day,
+            dateString: day.date,
+            total_miles_today: day.total_miles_today,
+            remarks: day.remarks,
+            totals: {
+              D: day.totals.driving,
+              ON: day.totals.on_duty,
+              OFF: day.totals.off_duty,
+              SB: day.totals.sleeper
+            },
+            intervals: day.events.map(ev => ({
+              status: ev.status,
+              durationMin: Math.round(ev.hours * 60)
+            }))
+          }))
+        });
+      }
       
       alert(`Successfully rescheduled departure date to ${newDate} and re-optimized route metrics!`);
     } catch (err) {

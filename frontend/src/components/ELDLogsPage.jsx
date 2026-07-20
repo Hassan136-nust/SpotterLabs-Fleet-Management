@@ -28,72 +28,99 @@ const STATUS_COLORS = {
 };
 
 const ELDLogsPage = ({ onTabChange, eldResult }) => {
-  // Determine if we have real solved data
-  const hasRealData = eldResult && eldResult.daily_logs && eldResult.daily_logs.length > 0;
+  const hasRealData = eldResult && eldResult.dailyLogs && eldResult.dailyLogs.length > 0;
   
   const [selectedDayIdx, setSelectedDayIdx] = useState(0);
+  const [localLogs, setLocalLogs] = useState([]);
+  const [prevEldResult, setPrevEldResult] = useState(null);
 
-  // 1. Get Day Data
-  let days = [];
-  let currentDateString = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-  let rawTotals = { off_duty: 12.0, sleeper: 4.0, driving: 6.0, on_duty: 2.0 };
+  // Modal State
+  const [showModal, setShowModal] = useState(false);
+  const [newRemarkStatus, setNewRemarkStatus] = useState('OFF');
+  const [newRemarkTime, setNewRemarkTime] = useState('12:00');
+  const [newRemarkLocation, setNewRemarkLocation] = useState('');
+  const [newRemarkNote, setNewRemarkNote] = useState('');
+
+  // Default Mock Logs (FMCSA compliant)
+  const defaultMockLogs = [
+    {
+      dayNumber: 1,
+      dateString: '05/24/2026',
+      total_miles_today: 432,
+      totals: { off_duty: 12.5, sleeper: 2.0, driving: 8.0, on_duty: 1.5 },
+      intervals: [
+        { status: 'OFF', durationMin: 360 }, // 12:00 AM - 06:00 AM
+        { status: 'ON', durationMin: 30 },   // 06:00 AM - 06:30 AM
+        { status: 'D', durationMin: 300 },    // 06:30 AM - 11:30 AM
+        { status: 'SB', durationMin: 120 },   // 11:30 AM - 01:30 PM
+        { status: 'D', durationMin: 180 },    // 01:30 PM - 04:30 PM
+        { status: 'ON', durationMin: 60 },    // 04:30 PM - 05:30 PM
+        { status: 'OFF', durationMin: 390 }   // 05:30 PM - 12:00 AM
+      ],
+      remarks: [
+        "00:00 - Chicago Hub, IL (start, off duty)",
+        "06:00 - Chicago Hub, IL (pre-trip, on duty)",
+        "06:30 - Chicago Hub, IL (depart, driving)",
+        "11:30 - Love's Travel Stop, IA (fuel/rest, sleeper berth)",
+        "13:30 - Love's Travel Stop, IA (resume, driving)",
+        "16:30 - Des Moines, IA (delivery, on duty)",
+        "17:30 - Pilot Rest Area, IA (10hr reset, off duty)"
+      ]
+    },
+    {
+      dayNumber: 2,
+      dateString: '05/25/2026',
+      total_miles_today: 310,
+      totals: { off_duty: 14.0, sleeper: 2.0, driving: 6.0, on_duty: 2.0 },
+      intervals: [
+        { status: 'OFF', durationMin: 600 }, // 12:00 AM - 10:00 AM
+        { status: 'ON', durationMin: 30 },   // 10:00 AM - 10:30 AM
+        { status: 'D', durationMin: 360 },    // 10:30 AM - 04:30 PM
+        { status: 'ON', durationMin: 90 },    // 04:30 PM - 06:00 PM
+        { status: 'OFF', durationMin: 360 }   // 06:00 PM - 12:00 AM
+      ],
+      remarks: [
+        "00:00 - Pilot Rest Area, IA (start, off duty)",
+        "10:00 - Pilot Rest Area, IA (pre-trip, on duty)",
+        "10:30 - Pilot Rest Area, IA (depart, driving)",
+        "16:30 - Omaha, NE (unload, on duty)",
+        "18:00 - Pilot Plaza Omaha, NE (10hr reset, off duty)"
+      ]
+    }
+  ];
+
+  // Sync state with props changes
+  if (eldResult !== prevEldResult) {
+    setPrevEldResult(eldResult);
+    if (hasRealData) {
+      setLocalLogs(eldResult.dailyLogs);
+    } else {
+      setLocalLogs(defaultMockLogs);
+    }
+  }
+
+  // Active day calculations
+  const currentDay = localLogs[selectedDayIdx] || (localLogs.length > 0 ? localLogs[0] : null);
+  
+  let currentDateString = '—';
+  let rawTotals = { off_duty: 12.0, sleeper: 0.0, driving: 0.0, on_duty: 0.0 };
   let events = [];
   let totalMilesToday = 0;
   let remarksList = [];
 
-  if (hasRealData) {
-    days = eldResult.daily_logs;
-    const currentDay = days[selectedDayIdx] || days[0];
-    
+  if (currentDay) {
     // Format YYYY-MM-DD to MM/DD/YYYY
-    if (currentDay.date) {
-      const [y, m, d] = currentDay.date.split('-');
+    if (currentDay.dateString && currentDay.dateString.includes('-')) {
+      const [y, m, d] = currentDay.dateString.split('-');
       currentDateString = `${m}/${d}/${y}`;
     } else {
-      currentDateString = currentDay.dateString;
+      currentDateString = currentDay.dateString || '—';
     }
     
-    rawTotals = currentDay.totals;
-    events = currentDay.events;
+    rawTotals = currentDay.totals || {};
+    events = currentDay.intervals || [];
     totalMilesToday = currentDay.total_miles_today || 0;
     remarksList = currentDay.remarks || [];
-  } else {
-    // Default mock data conforming to rules
-    days = [
-      { dayNumber: 1, dateString: '05/24/2026', total_miles_today: 432 },
-      { dayNumber: 2, dateString: '05/25/2026', total_miles_today: 310 },
-      { dayNumber: 3, dateString: '05/26/2026', total_miles_today: 280 }
-    ];
-    const currentDay = days[selectedDayIdx] || days[0];
-    currentDateString = currentDay.dateString;
-    totalMilesToday = currentDay.total_miles_today;
-    
-    rawTotals = {
-      off_duty: 12.5,
-      sleeper: 2.0,
-      driving: 8.0,
-      on_duty: 1.5
-    };
-    
-    events = [
-      { status: 'OFF', start: '00:00', end: '06:00', location: 'Chicago Hub' },
-      { status: 'ON', start: '06:00', end: '06:30', location: 'Chicago Hub' },
-      { status: 'D', start: '06:30', end: '11:30', location: 'En route I-80' },
-      { status: 'SB', start: '11:30', end: '13:30', location: 'Love\'s Travel Stop' },
-      { status: 'D', start: '13:30', end: '16:30', location: 'En route I-80' },
-      { status: 'ON', start: '16:30', end: '17:30', location: 'Des Moines Logistics' },
-      { status: 'OFF', start: '17:30', end: '24:00', location: 'Pilot Rest Area' }
-    ];
-
-    remarksList = [
-      "00:00 - Chicago Hub, IL (start, off duty)",
-      "06:00 - Chicago Hub, IL (pre-trip, on duty)",
-      "06:30 - Chicago Hub, IL (depart, driving)",
-      "11:30 - Love's Travel Stop, IA (fuel/rest, sleeper berth)",
-      "13:30 - Love's Travel Stop, IA (resume, driving)",
-      "16:30 - Des Moines, IA (delivery, on duty)",
-      "17:30 - Pilot Rest Area, IA (10hr reset, off duty)"
-    ];
   }
 
   // Map totals keys safely to match display standard
@@ -256,7 +283,7 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
             <div className="eld-graph-card-header">
               {/* Day Tabs */}
               <div className="day-selector-tabs">
-                {days.map((day, idx) => (
+                {localLogs.map((day, idx) => (
                   <button 
                     key={day.dayNumber || idx}
                     className={`day-tab-btn ${selectedDayIdx === idx ? 'active' : ''}`}
@@ -391,7 +418,7 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
                 <FiFileText className="annotations-icon" />
                 <h3>Log Details & Annotations</h3>
               </div>
-              <button className="btn-add-remark" onClick={() => alert("Remark logged to database successfully.")}>Add Remark</button>
+              <button className="btn-add-remark" onClick={() => setShowModal(true)}>Add Remark</button>
             </div>
 
             <div className="annotations-table-wrapper">
@@ -463,13 +490,135 @@ const ELDLogsPage = ({ onTabChange, eldResult }) => {
               </table>
 
               {/* Floating Plus action button */}
-              <button className="floating-action-button-table" onClick={() => alert("Form annotation overlay opened.")}><FiPlus /></button>
+              <button className="floating-action-button-table" onClick={() => setShowModal(true)}><FiPlus /></button>
             </div>
           </section>
 
         </div>
 
       </div>
+
+      {/* Add Remark Modal Dialog overlay */}
+      {showModal && (
+        <div className="eld-modal-overlay">
+          <div className="eld-modal-container">
+            <h3 className="modal-title">Add HOS Log Remark</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formatRemark = `${newRemarkTime} - ${newRemarkLocation} (${newRemarkStatus.toUpperCase()}: ${newRemarkNote})`;
+              const updated = [...localLogs];
+              const cur = { ...updated[selectedDayIdx] };
+              cur.remarks = [...(cur.remarks || []), formatRemark];
+              
+              // Also add a new status segment into intervals to visually update the grid!
+              const parseTime = (t) => {
+                const [h, m] = t.split(':').map(Number);
+                return h * 60 + m;
+              };
+              const targetMin = parseTime(newRemarkTime);
+              
+              // Split and rebuild intervals
+              let cumMin = 0;
+              const newIntervals = [];
+              let added = false;
+              
+              (cur.intervals || []).forEach(interval => {
+                const duration = interval.durationMin || 0;
+                if (!added && cumMin + duration >= targetMin) {
+                  // Split existing interval
+                  const leftDuration = targetMin - cumMin;
+                  const rightDuration = (cumMin + duration) - targetMin;
+                  
+                  if (leftDuration > 0) {
+                    newIntervals.push({ status: interval.status, durationMin: leftDuration });
+                  }
+                  // Insert the new status interval for 30 minutes
+                  newIntervals.push({ status: newRemarkStatus, durationMin: Math.min(30, rightDuration > 0 ? rightDuration : 30) });
+                  
+                  if (rightDuration - 30 > 0) {
+                    newIntervals.push({ status: interval.status, durationMin: rightDuration - 30 });
+                  }
+                  added = true;
+                } else {
+                  newIntervals.push(interval);
+                }
+                cumMin += duration;
+              });
+              
+              if (!added) {
+                newIntervals.push({ status: newRemarkStatus, durationMin: 30 });
+              }
+              
+              cur.intervals = newIntervals;
+              
+              // Recalculate totals based on new intervals
+              const newTotals = { OFF: 0, SB: 0, D: 0, ON: 0 };
+              newIntervals.forEach(intv => {
+                newTotals[intv.status] = (newTotals[intv.status] || 0) + (intv.durationMin / 60);
+              });
+              cur.totals = {
+                off_duty: newTotals.OFF,
+                sleeper: newTotals.SB,
+                driving: newTotals.D,
+                on_duty: newTotals.ON
+              };
+              
+              updated[selectedDayIdx] = cur;
+              setLocalLogs(updated);
+              setShowModal(false);
+              setNewRemarkLocation('');
+              setNewRemarkNote('');
+            }}>
+              <div className="modal-form-group">
+                <label>STATUS TYPE</label>
+                <select value={newRemarkStatus} onChange={(e) => setNewRemarkStatus(e.target.value)}>
+                  <option value="OFF">OFF DUTY</option>
+                  <option value="SB">SLEEPER BERTH</option>
+                  <option value="D">DRIVING</option>
+                  <option value="ON">ON DUTY (ND)</option>
+                </select>
+              </div>
+
+              <div className="modal-form-group">
+                <label>START TIME (HH:MM)</label>
+                <input 
+                  type="time" 
+                  value={newRemarkTime} 
+                  onChange={(e) => setNewRemarkTime(e.target.value)} 
+                  required 
+                />
+              </div>
+
+              <div className="modal-form-group">
+                <label>LOCATION (CITY, STATE)</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Des Moines, IA"
+                  value={newRemarkLocation} 
+                  onChange={(e) => setNewRemarkLocation(e.target.value)} 
+                  required 
+                />
+              </div>
+
+              <div className="modal-form-group">
+                <label>REMARKS / NOTES</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Routine Fuel Stop"
+                  value={newRemarkNote} 
+                  onChange={(e) => setNewRemarkNote(e.target.value)} 
+                  required 
+                />
+              </div>
+
+              <div className="modal-actions-row">
+                <button type="button" className="btn-modal-cancel" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className="btn-modal-submit">Save Remark</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

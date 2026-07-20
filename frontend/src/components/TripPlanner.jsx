@@ -168,6 +168,8 @@ const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState
           dailyLogs: data.daily_logs.map(day => ({
             dayNumber: day.day,
             dateString: day.date,
+            total_miles_today: day.total_miles_today,
+            remarks: day.remarks,
             totals: {
               D: day.totals.driving,
               ON: day.totals.on_duty,
