@@ -67,9 +67,7 @@ const Homepage = ({ onTabChange }) => {
               <button className="btn-orange-filled-caps" onClick={() => onTabChange('plan-trip')}>
                 INITIALIZE DISPATCH <FiArrowRight className="btn-arrow-icon" />
               </button>
-              <button className="btn-outline-caps">
-                VIEW NETWORK DATA
-              </button>
+
             </div>
           </div>
 
