@@ -435,6 +435,7 @@ const TripPlanner = ({ onTabChange, onEldSolved }) => {
               pickupLoc={locations.pickup}
               dropoffLoc={locations.dropoff}
               routeGeometry={routeGeometry}
+              stops={plannedStops}
             />
 
             {/* Floating Top Bar on Map */}

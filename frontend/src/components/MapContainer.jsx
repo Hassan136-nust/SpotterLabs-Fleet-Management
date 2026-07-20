@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import './MapContainer.css';
 
-const MapContainer = ({ currentLoc, pickupLoc, dropoffLoc, routeGeometry }) => {
+const MapContainer = ({ currentLoc, pickupLoc, dropoffLoc, routeGeometry, stops }) => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const layersRef = useRef({
@@ -100,19 +100,50 @@ const MapContainer = ({ currentLoc, pickupLoc, dropoffLoc, routeGeometry }) => {
       return marker;
     };
 
-    // Add Current Location
-    if (currentLoc) {
-      createCustomMarker([currentLoc.lat, currentLoc.lon], '#ff6b00', currentLoc.displayName, 'START TERMINAL', 'S');
-    }
+    // Draw all stops dynamically
+    if (stops && stops.length > 0) {
+      stops.forEach(stop => {
+        if (stop.lat && stop.lng) {
+          let color = '#ff6b00';
+          let title = 'STOP';
+          let initial = '•';
 
-    // Add Pickup Location
-    if (pickupLoc) {
-      createCustomMarker([pickupLoc.lat, pickupLoc.lon], '#3b82f6', pickupLoc.displayName, 'PICKUP STOP', 'P');
-    }
+          if (stop.type === 'start') {
+            color = '#ff6b00';
+            title = 'START TERMINAL';
+            initial = 'S';
+          } else if (stop.type === 'pickup') {
+            color = '#3b82f6';
+            title = 'PICKUP STOP';
+            initial = 'P';
+          } else if (stop.type === 'dropoff') {
+            color = '#10b981';
+            title = 'DESTINATION DROPOFF';
+            initial = 'D';
+          } else if (stop.type === 'fuel') {
+            color = '#eab308';
+            title = 'FUEL STOP';
+            initial = 'F';
+          } else if (stop.type === 'rest') {
+            color = '#64748b';
+            title = 'REST STOP';
+            initial = 'R';
+          }
 
-    // Add Dropoff Location
-    if (dropoffLoc) {
-      createCustomMarker([dropoffLoc.lat, dropoffLoc.lon], '#10b981', dropoffLoc.displayName, 'DESTINATION DROPOFF', 'D');
+          createCustomMarker([stop.lat, stop.lng], color, stop.location, title, initial);
+        }
+      });
+    } else {
+      // Fallback to primary markers
+      if (currentLoc) {
+        createCustomMarker([currentLoc.lat, currentLoc.lon], '#ff6b00', currentLoc.displayName, 'START TERMINAL', 'S');
+      }
+      if (pickupLoc) {
+        createCustomMarker([pickupLoc.lat, pickupLoc.lon], '#3b82f6', pickupLoc.displayName, 'PICKUP STOP', 'P');
+      }
+      if (dropoffLoc) {
+        createCustomMarker([dropoffLoc.lat, dropoffLoc.lon], '#10b981', dropoffLoc.displayName, 'DESTINATION DROPOFF', 'D');
+      }
     }
 
     // Add Route Polyline
