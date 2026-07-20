@@ -556,6 +556,7 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
     hasRealData ? eldResult.dailyLogs : defaultMockLogs
   );
   const [showModal, setShowModal]               = useState(false);
+  const [showRemarksModal, setShowRemarksModal] = useState(false);
   const [newRemarkStatus, setNewRemarkStatus]   = useState('OFF');
   const [newRemarkTime, setNewRemarkTime]       = useState('12:00');
   const [newRemarkLocation, setNewRemarkLocation] = useState('');
@@ -775,12 +776,19 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
 
             {remarks.length > 0 && (
               <div className="eld-remarks-list">
-                {remarks.map((r, i) => (
+                {remarks.slice(0, 5).map((r, i) => (
                   <div key={i} className="eld-remark-row">
                     <span className="remark-bullet">▸</span>
                     <span className="remark-text">{r}</span>
                   </div>
                 ))}
+                {remarks.length > 5 && (
+                  <div className="eld-remark-show-all" style={{ marginTop: '12px', textAlign: 'center' }}>
+                    <button className="btn-secondary" onClick={() => setShowRemarksModal(true)} style={{ padding: '6px 16px', fontSize: '0.85rem' }}>
+                      Show All {remarks.length} Remarks
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -862,8 +870,29 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
           </div>
         </div>
       )}
+
+      {/* Show All Remarks Modal */}
+      {showRemarksModal && (
+        <div className="eld-modal-overlay"
+          onClick={e => e.target === e.currentTarget && setShowRemarksModal(false)}>
+          <div className="eld-modal-container" style={{ maxWidth: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 className="modal-title" style={{ margin: 0 }}>All Remarks ({remarks.length})</h3>
+              <button onClick={() => setShowRemarksModal(false)} style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: '1.2rem', cursor: 'pointer' }}>&times;</button>
+            </div>
+            <div className="eld-remarks-list" style={{ overflowY: 'auto', flex: 1, paddingRight: '8px' }}>
+              {remarks.map((r, i) => (
+                <div key={i} className="eld-remark-row" style={{ marginBottom: '8px' }}>
+                  <span className="remark-bullet" style={{ color: '#d97706', marginRight: '8px' }}>▸</span>
+                  <span className="remark-text">{r}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-};
+}
 
 export default ELDLogsPage;
