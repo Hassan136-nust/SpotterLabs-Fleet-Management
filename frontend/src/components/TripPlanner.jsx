@@ -152,10 +152,21 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to communicate with Django HOS backend API.');
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to communicate with Django HOS backend API.');
+        } else {
+          const rawText = await response.text();
+          throw new Error(`Server returned HTML error: ${rawText.slice(0, 150)}...`);
+        }
       }
 
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const rawText = await response.text();
+        throw new Error(`Invalid non-JSON response from server: ${rawText.slice(0, 150)}...`);
+      }
       const data = await response.json();
 
       // Find pickup and dropoff stop coordinates from stops
