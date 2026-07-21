@@ -669,7 +669,8 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
     }
     setSavingProgress(true);
     try {
-      const res = await fetch('http://localhost:8000/api/complete-trip/', {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${API_BASE}/api/complete-trip/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dispatch_id: eldResult.dispatch_id })

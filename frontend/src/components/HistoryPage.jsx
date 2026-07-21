@@ -10,7 +10,8 @@ const HistoryPage = ({ onTabChange, onNewDispatch }) => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/history/');
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${API_BASE}/api/history/`);
         if (response.ok) {
           const data = await response.json();
           setHistory(data);
