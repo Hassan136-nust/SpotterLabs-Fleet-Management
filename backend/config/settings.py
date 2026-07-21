@@ -52,6 +52,9 @@ else:
 
 ROOT_URLCONF = 'config.urls'
 
+# OpenRouteService API Key for route/geocoding calculations
+OPENROUTE_SERVICE_API_KEY = os.environ.get('OPENROUTE_SERVICE_API_KEY', '')
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
