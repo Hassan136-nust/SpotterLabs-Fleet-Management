@@ -113,7 +113,9 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
           mainOffice: data.main_office || prev.mainOffice
         }));
         // Update cycle hours input to remaining hours
-        setInputs(prev => ({ ...prev, cycleHours: data.remaining_cycle_hours.toFixed(1) }));
+        const rem = data.remaining_cycle_hours.toFixed(1);
+        setInputs(prev => ({ ...prev, cycleHours: rem }));
+        setMetrics(prev => ({ ...prev, remainingCycle: rem }));
       }
     } catch (err) {
       console.error("Failed to fetch driver info", err);
@@ -255,6 +257,7 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
                   const label = city && state ? `${city}, ${state}` : prop.label || '';
                   if (label) {
                     setInputs(prev => ({ ...prev, currentLocation: label }));
+                    setLocations(prev => ({ ...prev, current: { lat: latitude, lon: longitude, displayName: label } }));
                     return;
                   }
                 }
@@ -399,9 +402,13 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
                     type="number" 
                     className="planner-raw-input"
                     value={inputs.cycleHours}
-                    onChange={e => setInputs({ ...inputs, cycleHours: e.target.value })}
+                    onChange={e => {
+                      setInputs({ ...inputs, cycleHours: e.target.value });
+                      setMetrics(prev => ({ ...prev, remainingCycle: e.target.value || 0 }));
+                    }}
                     min="1"
                     max="70"
+                    step="0.1"
                     required
                   />
                 </div>
