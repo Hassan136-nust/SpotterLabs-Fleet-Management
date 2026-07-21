@@ -4,6 +4,7 @@ import Homepage from './components/Homepage';
 import TripPlanner from './components/TripPlanner';
 import RoutesPage from './components/RoutesPage';
 import ELDLogsPage from './components/ELDLogsPage';
+import HistoryPage from './components/HistoryPage';
 import Sidebar from './components/Sidebar';
 import './index.css';
 
@@ -57,16 +58,49 @@ function App() {
     window.scrollTo(0, 0);
   };
 
+  const handleNewDispatch = () => {
+    // Reset driver info and trip plan state for a new journey
+    setDriverInfo({
+      driverName:  '',
+      driverId:    '',
+      truckNumber: '',
+      coDriver:    'None',
+      carrierId:   '',
+      mainOffice:  ''
+    });
+    
+    setTripPlanState({
+      inputs: {
+        currentLocation: 'Detecting location...',
+        pickupLocation: '',
+        dropoffLocation: '',
+        cycleHours: '70',
+        departureDate: new Date().toISOString().split('T')[0]
+      },
+      locations: { current: null, pickup: null, dropoff: null },
+      routeGeometry: null,
+      metrics: {
+        distance: 0, driveTime: 0, eta: '—', etaDate: '—',
+        remainingCycle: 70, fuelStops: 0, restStops: 0
+      },
+      plannedStops: []
+    });
+    
+    setEldResult(null);
+    handleTabChange('plan-trip');
+  };
+
   // Render content based on current active tab
   const renderTabContent = () => {
     switch (activeTab) {
       case 'homepage':
-        return <Homepage onTabChange={handleTabChange} />;
+        return <Homepage onTabChange={handleTabChange} onNewDispatch={handleNewDispatch} />;
         
       case 'plan-trip':
         return (
           <TripPlanner 
             onTabChange={handleTabChange} 
+            onNewDispatch={handleNewDispatch}
             onEldSolved={(result) => setEldResult(result)}
             tripPlanState={tripPlanState}
             setTripPlanState={setTripPlanState}
@@ -79,6 +113,7 @@ function App() {
         return (
           <RoutesPage 
             onTabChange={handleTabChange} 
+            onNewDispatch={handleNewDispatch}
             tripPlanState={tripPlanState}
             setTripPlanState={setTripPlanState}
             onEldSolved={(result) => setEldResult(result)}
@@ -89,17 +124,26 @@ function App() {
         return (
           <ELDLogsPage 
             onTabChange={handleTabChange} 
+            onNewDispatch={handleNewDispatch}
             eldResult={eldResult}
             driverInfo={driverInfo}
             tripPlanState={tripPlanState}
           />
         );
 
+      case 'history':
+        return (
+          <HistoryPage 
+            onTabChange={handleTabChange}
+            onNewDispatch={handleNewDispatch}
+          />
+        );
+
       default:
-        // Placeholder for other tabs (Routes, History, Settings)
+        // Placeholder for other tabs (Settings)
         return (
           <div className="tab-page-container">
-            <Sidebar activeTab={activeTab} onTabChange={handleTabChange} />
+            <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onNewDispatch={handleNewDispatch} />
             <div className="tab-page-content">
               <header className="tab-content-header">
                 <h2 className="tab-page-title" style={{ textTransform: 'capitalize' }}>{activeTab} Management</h2>

@@ -516,7 +516,7 @@ ${daySheets}
 /* ═══════════════════════════════════════════════════════════
    MAIN PAGE
 ═══════════════════════════════════════════════════════════ */
-const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
+const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPlanState }) => {
   const hasRealData = eldResult?.dailyLogs?.length > 0;
 
   const di = driverInfo || {};
@@ -607,9 +607,38 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
     OFF: 'OFF DUTY', SB: 'SLEEPER BERTH', D: 'DRIVING', ON: 'ON DUTY (ND)'
   };
 
+  const [savingProgress, setSavingProgress] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const handleSaveProgress = async () => {
+    if (!eldResult?.dispatch_id) {
+      alert("No active dispatch ID found. Plan a trip first.");
+      return;
+    }
+    setSavingProgress(true);
+    try {
+      const res = await fetch('http://localhost:8000/api/complete-trip/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dispatch_id: eldResult.dispatch_id })
+      });
+      if (res.ok) {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        alert("Failed to save progress.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error saving progress.");
+    } finally {
+      setSavingProgress(false);
+    }
+  };
+
   return (
     <div className="eld-page-layout">
-      <Sidebar activeTab="eld-logs" onTabChange={onTabChange} />
+      <Sidebar activeTab="eld-logs" onTabChange={onTabChange} onNewDispatch={onNewDispatch} />
 
       <div className="eld-main-panel">
 
@@ -626,6 +655,16 @@ const ELDLogsPage = ({ onTabChange, eldResult, driverInfo, tripPlanState }) => {
             <div className="system-compliant-pill">
               <span className="green-pulse-dot" /> FMCSA COMPLIANT
             </div>
+            
+            <button 
+              className={`eld-utility-btn ${saveSuccess ? 'success-btn' : ''}`}
+              onClick={handleSaveProgress}
+              disabled={savingProgress || !hasRealData}
+              style={{ backgroundColor: saveSuccess ? '#10b981' : '#f97316', color: 'white', border: 'none', marginLeft: '12px', padding: '6px 16px', borderRadius: '4px', fontWeight: 'bold' }}
+            >
+              {savingProgress ? 'SAVING...' : saveSuccess ? '✓ SAVED' : 'SAVE PROGRESS'}
+            </button>
+
             <div className="eld-user-widget-detailed">
               <div className="eld-user-info">
                 <span className="eld-username">{resolvedDriver.name || 'Driver'}</span>

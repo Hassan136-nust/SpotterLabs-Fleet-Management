@@ -155,3 +155,82 @@
   font-size: 0.6875rem;
   color: #8c7365;
 }
+
+/* Modal Styles */
+.sidebar-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.sidebar-modal-container {
+  background-color: #1a120e;
+  border: 1px solid #2b201a;
+  border-radius: 8px;
+  padding: 24px;
+  width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-modal-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.sidebar-modal-desc {
+  font-size: 0.875rem;
+  color: #b09e95;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.sidebar-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.sidebar-btn-cancel {
+  background: none;
+  border: 1px solid #2b201a;
+  color: #b09e95;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-btn-cancel:hover {
+  background-color: #241b16;
+  color: #ffffff;
+}
+
+.sidebar-btn-confirm {
+  background-color: #ff6b00;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-btn-confirm:hover {
+  background-color: #e05e00;
+}

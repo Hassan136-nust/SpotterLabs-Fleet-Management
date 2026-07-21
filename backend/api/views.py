@@ -1,10 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import TripPlanRequestSerializer
+from .serializers import TripPlanRequestSerializer, DriverSerializer
 from .services.routing import geocode_address, get_hgv_route
 from .services.hos_engine import plan_trip
-from .models import TripDispatch
+from .models import TripDispatch, Driver
 
 class PlanTripAPIView(APIView):
     def post(self, request, *args, **kwargs):
@@ -13,10 +13,30 @@ class PlanTripAPIView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
         data = serializer.validated_data
+        
+        # Driver handling
+        driver_id = data.get('driver_id')
+        driver = None
+        if driver_id:
+            driver, _ = Driver.objects.get_or_create(
+                driver_id=driver_id,
+                defaults={
+                    'name': data.get('driver_name', 'Unknown Driver'),
+                    'truck_number': data.get('truck_number', ''),
+                    'co_driver': data.get('co_driver', 'None'),
+                    'carrier_id': data.get('carrier_id', ''),
+                    'main_office': data.get('main_office', ''),
+                    'used_cycle_hours': 0.0
+                }
+            )
+            # Use driver's actual cycle hours if they exist
+            cycle_used = driver.used_cycle_hours
+        else:
+            cycle_used = data.get('current_cycle_used', 0.0)
+
         current_loc = data['current_location']
         pickup_loc = data['pickup_location']
         dropoff_loc = data['dropoff_location']
-        cycle_used = data['current_cycle_used']
         
         # 1. Geocode locations
         current_coords = geocode_address(current_loc)
@@ -84,6 +104,7 @@ class PlanTripAPIView(APIView):
             eta_time = final_event['start'] if final_event else '06:00 PM'
             
             dispatch_record = TripDispatch.objects.create(
+                driver=driver,
                 current_location=current_coords['display_name'],
                 pickup_location=pickup_coords['display_name'],
                 dropoff_location=dropoff_coords['display_name'],
@@ -114,6 +135,9 @@ class HistoryAPIView(APIView):
         for d in dispatches:
             records.append({
                 "id": d.id,
+                "driver_name": d.driver.name if d.driver else "Unassigned",
+                "driver_id": d.driver.driver_id if d.driver else "",
+                "is_complete": d.is_complete,
                 "current_location": d.current_location,
                 "pickup_location": d.pickup_location,
                 "dropoff_location": d.dropoff_location,
@@ -125,4 +149,44 @@ class HistoryAPIView(APIView):
                 "created_at": d.created_at.strftime("%Y-%m-%d %H:%M:%S")
             })
         return Response(records, status=status.HTTP_200_OK)
+
+class DriverAPIView(APIView):
+    def get(self, request, driver_id, *args, **kwargs):
+        try:
+            driver = Driver.objects.get(driver_id=driver_id)
+            serializer = DriverSerializer(driver)
+            data = serializer.data
+            data['remaining_cycle_hours'] = max(0.0, 70.0 - driver.used_cycle_hours)
+            return Response(data, status=status.HTTP_200_OK)
+        except Driver.DoesNotExist:
+            return Response({"error": "Driver not found"}, status=status.HTTP_404_NOT_FOUND)
+
+class CompleteTripAPIView(APIView):
+    def post(self, request, *args, **kwargs):
+        dispatch_id = request.data.get('dispatch_id')
+        if not dispatch_id:
+            return Response({"error": "dispatch_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            dispatch = TripDispatch.objects.get(id=dispatch_id)
+            if dispatch.is_complete:
+                return Response({"message": "Trip is already complete"}, status=status.HTTP_200_OK)
+                
+            dispatch.is_complete = True
+            dispatch.save()
+            
+            driver = dispatch.driver
+            if driver:
+                # Add total driving + on-duty time from the logs to driver's cycle
+                total_used = 0
+                for day in dispatch.logs_data:
+                    totals = day.get('totals', {})
+                    total_used += totals.get('driving', 0) + totals.get('on_duty', 0)
+                
+                driver.used_cycle_hours += total_used
+                driver.save()
+                
+            return Response({"message": "Trip completed successfully", "used_added": total_used if driver else 0}, status=status.HTTP_200_OK)
+        except TripDispatch.DoesNotExist:
+            return Response({"error": "Trip dispatch not found"}, status=status.HTTP_404_NOT_FOUND)
 

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   FiLayout,
   FiMap,
@@ -10,7 +11,14 @@ import {
 } from 'react-icons/fi';
 import './Sidebar.css';
 
-const Sidebar = ({ activeTab, onTabChange }) => {
+const Sidebar = ({ activeTab, onTabChange, onNewDispatch }) => {
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  const handleConfirmNewDispatch = () => {
+    setShowConfirmModal(false);
+    if (onNewDispatch) onNewDispatch();
+  };
+
   return (
     <aside className="app-sidebar">
       {/* Brand Header */}
@@ -61,7 +69,7 @@ const Sidebar = ({ activeTab, onTabChange }) => {
 
       {/* Sidebar Footer Actions */}
       <div className="sidebar-bottom-actions">
-        <button className="btn-new-dispatch">
+        <button className="btn-new-dispatch" onClick={() => setShowConfirmModal(true)}>
           <FiPlus className="plus-icon" /> New Dispatch
         </button>
 
@@ -74,6 +82,23 @@ const Sidebar = ({ activeTab, onTabChange }) => {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal via Portal */}
+      {showConfirmModal && createPortal(
+        <div className="sidebar-modal-overlay" onClick={() => setShowConfirmModal(false)}>
+          <div className="sidebar-modal-container" onClick={(e) => e.stopPropagation()}>
+            <h3 className="sidebar-modal-title">Start New Dispatch?</h3>
+            <p className="sidebar-modal-desc">
+              Are you sure you want to start a new dispatch? This will clear your current trip planner and driver session.
+            </p>
+            <div className="sidebar-modal-actions">
+              <button className="sidebar-btn-cancel" onClick={() => setShowConfirmModal(false)}>Cancel</button>
+              <button className="sidebar-btn-confirm" onClick={handleConfirmNewDispatch}>Confirm</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </aside>
   );
 };

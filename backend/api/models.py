@@ -1,6 +1,20 @@
 from django.db import models
 
+class Driver(models.Model):
+    name = models.CharField(max_length=255)
+    driver_id = models.CharField(max_length=100, unique=True)
+    truck_number = models.CharField(max_length=100, blank=True)
+    co_driver = models.CharField(max_length=255, blank=True)
+    carrier_id = models.CharField(max_length=255, blank=True)
+    main_office = models.CharField(max_length=255, blank=True)
+    used_cycle_hours = models.FloatField(default=0.0)
+
+    def __str__(self):
+        return f"{self.name} ({self.driver_id})"
+
 class TripDispatch(models.Model):
+    driver = models.ForeignKey(Driver, on_delete=models.CASCADE, null=True, blank=True)
+    is_complete = models.BooleanField(default=False)
     current_location = models.CharField(max_length=255)
     pickup_location = models.CharField(max_length=255)
     dropoff_location = models.CharField(max_length=255)

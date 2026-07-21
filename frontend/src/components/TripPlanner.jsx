@@ -16,7 +16,7 @@ import { geocodeAddress, getRoute } from '../services/api';
 import { solveELDLogs } from '../utils/eldSolver';
 import './TripPlanner.css';
 
-const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState, driverInfo, setDriverInfo }) => {
+const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, setTripPlanState, driverInfo, setDriverInfo }) => {
   const { inputs, locations, routeGeometry, metrics, plannedStops } = tripPlanState;
 
   // centralized state setters
@@ -97,6 +97,29 @@ const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState
     setActiveField(null);
   };
 
+  // Fetch driver profile to get remaining cycle hours
+  const handleDriverIdBlur = async () => {
+    if (!driverInfo?.driverId) return;
+    try {
+      const res = await fetch(`http://localhost:8000/api/driver/${driverInfo.driverId}/`);
+      if (res.ok) {
+        const data = await res.json();
+        setDriverInfo(prev => ({
+          ...prev,
+          driverName: data.name || prev.driverName,
+          truckNumber: data.truck_number || prev.truckNumber,
+          coDriver: data.co_driver || prev.coDriver,
+          carrierId: data.carrier_id || prev.carrierId,
+          mainOffice: data.main_office || prev.mainOffice
+        }));
+        // Update cycle hours input to remaining hours
+        setInputs(prev => ({ ...prev, cycleHours: data.remaining_cycle_hours.toFixed(1) }));
+      }
+    } catch (err) {
+      console.error("Failed to fetch driver info", err);
+    }
+  };
+
   // Calculate route and HOS metrics using Django backend
   const handleCalculateRoute = async (e) => {
     if (e) e.preventDefault();
@@ -113,7 +136,13 @@ const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState
           current_location: inputs.currentLocation,
           pickup_location: inputs.pickupLocation,
           dropoff_location: inputs.dropoffLocation,
-          current_cycle_used: 70 - parseFloat(inputs.cycleHours)
+          current_cycle_used: 70 - parseFloat(inputs.cycleHours),
+          driver_id: driverInfo?.driverId || '',
+          driver_name: driverInfo?.driverName || '',
+          truck_number: driverInfo?.truckNumber || '',
+          co_driver: driverInfo?.coDriver || '',
+          carrier_id: driverInfo?.carrierId || '',
+          main_office: driverInfo?.mainOffice || ''
         })
       });
 
@@ -165,6 +194,7 @@ const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState
       // Pass HOS result to App.jsx to synchronize the ELD Logs tab
       if (onEldSolved) {
         onEldSolved({
+          dispatch_id: data.dispatch_id,
           // Driver & carrier metadata from form
           driverInfo: {
             driverName:  driverInfo?.driverName  || '',
@@ -252,7 +282,7 @@ const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState
   return (
     <div className="trip-planner-page-layout">
       {/* Sidebar Navigation */}
-      <Sidebar activeTab="plan-trip" onTabChange={onTabChange} />
+      <Sidebar activeTab="plan-trip" onTabChange={onTabChange} onNewDispatch={onNewDispatch} />
 
       {/* Main Panel */}
       <div className="planner-main-panel">
@@ -414,6 +444,7 @@ const TripPlanner = ({ onTabChange, onEldSolved, tripPlanState, setTripPlanState
                     placeholder="e.g. #44920"
                     value={driverInfo?.driverId || ''}
                     onChange={e => setDriverInfo(prev => ({ ...prev, driverId: e.target.value }))}
+                    onBlur={handleDriverIdBlur}
                   />
                 </div>
               </div>
