@@ -141,7 +141,7 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
           current_location: inputs.currentLocation,
           pickup_location: inputs.pickupLocation,
           dropoff_location: inputs.dropoffLocation,
-          current_cycle_used: 70 - parseFloat(inputs.cycleHours),
+          current_cycle_used: Math.max(0, Math.min(70, 70 - (parseFloat(inputs.cycleHours) || 70))),
           driver_id: driverInfo?.driverId || '',
           driver_name: driverInfo?.driverName || '',
           truck_number: driverInfo?.truckNumber || '',
