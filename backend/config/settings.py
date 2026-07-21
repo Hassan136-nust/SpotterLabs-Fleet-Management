@@ -14,7 +14,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-k)km*o09!yi+!t6dhct$v
 # DEBUG — False in production (Render sets DEBUG=False automatically)
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'spotterlabs-fleet-management.onrender.com', '.onrender.com']
 
 
 # Application definition
