@@ -408,16 +408,25 @@ class App {
     this.addEventListeners();
   }
   createRenderer() {
-    this.renderer = new Renderer({
-      alpha: true,
-      antialias: true,
-      dpr: Math.min(window.devicePixelRatio || 1, 2)
-    });
-    this.gl = this.renderer.gl;
-    this.gl.clearColor(0, 0, 0, 0);
-    this.container.appendChild(this.gl.canvas);
+    try {
+      this.renderer = new Renderer({
+        alpha: true,
+        antialias: true,
+        dpr: Math.min(window.devicePixelRatio || 1, 2)
+      });
+      this.gl = this.renderer.gl;
+      if (!this.gl) {
+        console.warn("WebGL context not created by OGL Renderer.");
+        return;
+      }
+      this.gl.clearColor(0, 0, 0, 0);
+      this.container.appendChild(this.gl.canvas);
+    } catch (e) {
+      console.error("Failed to initialize OGL WebGL Renderer:", e);
+    }
   }
   createCamera() {
+    if (!this.gl) return;
     this.camera = new Camera(this.gl);
     this.camera.fov = 45;
     this.camera.position.z = 20;
@@ -426,12 +435,14 @@ class App {
     this.scene = new Transform();
   }
   createGeometry() {
+    if (!this.gl) return;
     this.planeGeometry = new Plane(this.gl, {
       heightSegments: 50,
       widthSegments: 100
     });
   }
   createMedias(items, bend = 1, textColor, borderRadius, font) {
+    if (!this.gl) return;
     const defaultItems = [
       { image: `https://picsum.photos/seed/1/800/600?grayscale`, text: 'Bridge' },
       { image: `https://picsum.photos/seed/2/800/600?grayscale`, text: 'Desk Setup' },
@@ -512,6 +523,7 @@ class App {
     this.scroll.target = this.scroll.target < 0 ? -item : item;
   }
   onResize() {
+    if (!this.gl || !this.renderer) return;
     this.screen = {
       width: this.container.clientWidth,
       height: this.container.clientHeight
@@ -529,6 +541,7 @@ class App {
     }
   }
   update() {
+    if (!this.gl || !this.renderer) return;
     if (!this.isDown) {
       this.scroll.target += 0.03 * this.scrollSpeed;
     }
