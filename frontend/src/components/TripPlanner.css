@@ -96,16 +96,35 @@
 
 /* Form Panel */
 .planner-form-panel {
-  width: 380px;
+  width: 400px;
   background-color: #120c0a;
   border-right: 1px solid #2b201a;
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   overflow-y: auto;
+  overflow-x: hidden;
   flex-shrink: 0;
   box-sizing: border-box;
+}
+
+/* Beautiful custom thin scrollbar */
+.planner-form-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.planner-form-panel::-webkit-scrollbar-track {
+  background: #120c0a;
+}
+
+.planner-form-panel::-webkit-scrollbar-thumb {
+  background: #2b201a;
+  border-radius: 3px;
+}
+
+.planner-form-panel::-webkit-scrollbar-thumb:hover {
+  background: #ff6b00;
 }
 
 .planner-panel-header {
@@ -184,6 +203,15 @@
   color: #ffffff;
   font-size: 0.8125rem;
   outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.planner-raw-input:focus {
+  border-color: #ff6b00;
+  background-color: #241813;
+  box-shadow: 0 0 8px rgba(255, 107, 0, 0.2);
 }
 
 .planner-date-input {
@@ -210,8 +238,9 @@
 
 .planner-row-inputs {
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
+  width: 100%;
 }
 
 .no-padding-left {
@@ -535,6 +564,98 @@
   letter-spacing: 0.1em;
   color: #8c7365;
   white-space: nowrap;
+}
+
+/* ── FMCSA Compliance Warning Modal Styling ── */
+.warning-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.warning-modal-content {
+  background-color: #160f0c;
+  border: 1px solid #ff4400;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 450px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(255, 68, 0, 0.2);
+  animation: modalScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalScaleIn {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.warning-modal-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  animation: pulseWarning 1.5s infinite;
+}
+
+@keyframes pulseWarning {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.warning-modal-title {
+  color: #ff4400;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  margin: 0 0 14px;
+}
+
+.warning-modal-text {
+  color: #ffffff;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+
+.warning-highlight {
+  color: #ff4400;
+  font-weight: 800;
+}
+
+.warning-modal-subtext {
+  color: #8c7365;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin: 0 0 24px;
+}
+
+.warning-modal-btn {
+  background-color: #ff4400;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.warning-modal-btn:hover {
+  background-color: #ff6622;
+  box-shadow: 0 4px 12px rgba(255, 68, 0, 0.3);
 }
 
 

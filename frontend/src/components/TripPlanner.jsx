@@ -57,6 +57,7 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [warningModal, setWarningModal] = useState({ show: false, hours: 0 });
 
   // Autocomplete and Dynamic suggestions
   const [suggestions, setSuggestions] = useState({ current: [], pickup: [], dropoff: [] });
@@ -101,7 +102,8 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
   const handleDriverIdBlur = async () => {
     if (!driverInfo?.driverId) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/driver/${driverInfo.driverId}/`);
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${API_BASE}/api/driver/${driverInfo.driverId}/`);
       if (res.ok) {
         const data = await res.json();
         setDriverInfo(prev => ({
@@ -129,7 +131,8 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:8000/api/plan-trip/', {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_BASE}/api/plan-trip/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -183,7 +186,7 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
       const finalEvent = finalDay.events[finalDay.events.length - 1];
 
       // Map metrics from backend
-      setMetrics({
+      const calculatedMetrics = {
         distance: Math.round(data.total_miles),
         driveTime: parseFloat(totalDriveHrs.toFixed(1)),
         eta: finalEvent ? finalEvent.start : '06:00 PM',
@@ -191,7 +194,17 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
         remainingCycle: parseFloat((parseFloat(inputs.cycleHours) - data.daily_logs.reduce((acc, day) => acc + day.totals.on_duty + day.totals.driving, 0)).toFixed(1)),
         fuelStops: data.stops.filter(s => s.type === 'fuel').length,
         restStops: data.stops.filter(s => s.type === 'rest').length
-      });
+      };
+
+      setMetrics(calculatedMetrics);
+
+      // Trigger safety warning modal if remaining hours are negative
+      if (calculatedMetrics.remainingCycle < 0) {
+        setWarningModal({
+          show: true,
+          hours: Math.abs(calculatedMetrics.remainingCycle)
+        });
+      }
 
       // Pass HOS result to App.jsx to synchronize the ELD Logs tab
       if (onEldSolved) {
@@ -641,6 +654,28 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
         </div>
 
       </div>
+
+      {/* FMCSA HOS Compliance Warning Modal */}
+      {warningModal.show && (
+        <div className="warning-modal-overlay">
+          <div className="warning-modal-content">
+            <div className="warning-modal-icon">⚠️</div>
+            <h3 className="warning-modal-title">FMSCA HOS CYCLE VIOLATION</h3>
+            <p className="warning-modal-text">
+              The calculated route exceeds the driver's available hours of service (HOS) cycle by <span className="warning-highlight">{warningModal.hours} hours</span>.
+            </p>
+            <p className="warning-modal-subtext">
+              Spotter has scheduled the necessary 34H Rest Stops to reset the driver's cycle. Please review the updated log sheet and route details.
+            </p>
+            <button 
+              className="warning-modal-btn" 
+              onClick={() => setWarningModal({ show: false, hours: 0 })}
+            >
+              ACKNOWLEDGE WARNING
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

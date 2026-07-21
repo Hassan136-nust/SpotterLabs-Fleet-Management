@@ -11,7 +11,30 @@ import {
   FiGithub,
   FiDroplet
 } from 'react-icons/fi';
+import CircularGallery from './CircularGallery';
 import './Dashboard.css'; // Reuse homepage styles
+
+
+const galleryItems = [
+  {
+    image: '/WhatsApp Image 2026-07-21 at 6.51.52 PM.jpeg',
+    text: 'Route Optimization'
+  },
+  {
+    image: '/ChatGPT Image Jul 21, 2026, 06_40_31 PM.png',
+    text: 'Live Fleet Telematics'
+  },
+  {
+    image: '/WhatsApp Image 2026-07-21 at 6.54.49 PM.jpeg',
+    text: 'Automatic ELD Log Generation'
+  },
+
+  {
+    image: '/ChatGPT Image Jul 21, 2026, 06_32_05 PM.png',
+    text: 'Smart Fuel & Rest Stop Planning'
+  }
+
+];
 
 const Homepage = ({ onTabChange }) => {
   return (
@@ -122,92 +145,20 @@ const Homepage = ({ onTabChange }) => {
           <span className="section-label-orange">CORE CAPABILITIES</span>
           <h2 className="section-title-large">Engineered for Reliability</h2>
           <p className="section-subtitle-large">
-            Streamlining the logistics chain through advanced telemetry and automated decision making.
+            Streamlining the logistics chain through advanced telemetry and automated decision making. Drag or scroll to explore capabilities.
           </p>
 
-          <div className="capabilities-grid-layout">
-            {/* Card 1: AI Route Optimization */}
-            <div className="cap-card-item">
-              <div className="cap-card-header">
-                <div className="cap-icon-box">
-                  <FiMap />
-                </div>
-                <h3 className="cap-card-title">AI Route Optimization</h3>
-              </div>
-              <p className="cap-card-desc">
-                Predictive algorithms analyze traffic patterns, weather, and topography to find the most fuel-efficient path for every load.
-              </p>
-              {/* Graphical Line Visualizer */}
-              <div className="route-visualizer-box">
-                <svg className="route-visualizer-svg" viewBox="0 0 300 40">
-                  <line x1="20" y1="20" x2="280" y2="20" className="route-line-base" />
-                  <circle cx="20" cy="20" r="4" className="route-point-active" />
-                  <circle cx="100" cy="20" r="4" className="route-point-active" />
-                  <circle cx="200" cy="20" r="4" className="route-point-active" />
-                  <circle cx="280" cy="20" r="4" className="route-point-active" />
-                </svg>
-              </div>
-            </div>
-
-            {/* Card 2: Automatic ELD Log Generation */}
-            <div className="cap-card-item">
-              <div className="cap-card-header">
-                <div className="cap-icon-box">
-                  <FiClock />
-                </div>
-                <h3 className="cap-card-title">Automatic ELD Log Generation</h3>
-              </div>
-              <p className="cap-card-desc">
-                Zero-touch logging. Our system captures duty status automatically, reducing human error and audit risk.
-              </p>
-              <div className="eld-status-meta">
-                <span className="eld-meta-lbl">LOG ACCURACY</span>
-                <span className="eld-meta-val">HIGH FIDELITY</span>
-              </div>
-            </div>
-
-            {/* Card 3: FMCSA HOS Compliance */}
-            <div className="cap-card-item">
-              <div className="cap-card-header">
-                <div className="cap-icon-box">
-                  <FiShield />
-                </div>
-                <h3 className="cap-card-title">FMCSA HOS Compliance</h3>
-              </div>
-              <p className="cap-card-desc">
-                Real-time alerts for HOS violations before they happen. Keep your safety score pristine and your drivers safe.
-              </p>
-              <div className="compliance-monitor-status">
-                <span className="pulse-green-dot"></span> COMPLIANCE MONITOR ACTIVE
-              </div>
-            </div>
-
-            {/* Card 4: Smart Fuel & Rest Stop Planning */}
-            <div className="cap-card-item flex-two-columns">
-              <div className="cap-card-header">
-                <div className="cap-icon-box">
-                  <FiDroplet />
-                </div>
-                <h3 className="cap-card-title">Smart Fuel & Rest Stop Planning</h3>
-              </div>
-              <p className="cap-card-desc">
-                Optimize stops based on fuel price data and safe parking availability, ensuring drivers rest where it's best for business.
-              </p>
-              <button onClick={() => onTabChange('routes')} className="explore-network-link" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', marginTop: '16px' }}>
-                EXPLORE NETWORK <span className="arrow-small">→</span>
-              </button>
-
-              <div className="fuel-savings-metric-boxes">
-                <div className="metric-mini-box">
-                  <span className="metric-mini-lbl">FUEL SAVINGS</span>
-                  <span className="metric-mini-val">14.2%</span>
-                </div>
-                <div className="metric-mini-box">
-                  <span className="metric-mini-lbl">PARK SUCCESS</span>
-                  <span className="metric-mini-val">92%</span>
-                </div>
-              </div>
-            </div>
+          <div style={{ height: '520px', position: 'relative', width: '100%', marginTop: '30px' }}>
+            <CircularGallery
+              items={galleryItems}
+              bend={3}
+              textColor="#ff6600"
+              borderRadius={0.06}
+              scrollSpeed={2}
+              scrollEase={0.04}
+              font="bold 24px Orbitron"
+              fontUrl="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap"
+            />
           </div>
         </section>
 

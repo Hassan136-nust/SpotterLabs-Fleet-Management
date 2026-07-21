@@ -546,6 +546,44 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
   const [newRemarkTime, setNewRemarkTime]       = useState('12:00');
   const [newRemarkLocation, setNewRemarkLocation] = useState('');
   const [newRemarkNote, setNewRemarkNote]       = useState('');
+  const [fetchingLoc, setFetchingLoc]           = useState(false);
+
+  const handleAutoFetchLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+    setFetchingLoc(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+          if (res.ok) {
+            const data = await res.json();
+            const address = data.address;
+            const city = address.city || address.town || address.village || address.suburb || '';
+            const state = address.state || '';
+            const locationString = [city, state].filter(Boolean).join(', ') || 'Unknown Location';
+            setNewRemarkLocation(locationString);
+          } else {
+            setNewRemarkLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+          }
+        } catch (err) {
+          console.error("Reverse geocoding failed", err);
+          setNewRemarkLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+        } finally {
+          setFetchingLoc(false);
+        }
+      },
+      (error) => {
+        console.error("Geolocation error", error);
+        alert("Unable to fetch location: " + error.message);
+        setFetchingLoc(false);
+      },
+      { enableHighAccuracy: true, timeout: 5000 }
+    );
+  };
 
   useEffect(() => {
     setLocalLogs(hasRealData ? eldResult.dailyLogs : defaultMockLogs);
@@ -595,7 +633,21 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
     const entry = `${newRemarkTime} – ${newRemarkLocation} (${newRemarkStatus}: ${newRemarkNote})`;
     const updated = [...localLogs];
     const cur     = { ...updated[selectedDayIdx] };
+    
+    // 1. Add to remarks list
     cur.remarks   = [...(cur.remarks || []), entry];
+    
+    // 2. Insert as a new event block inside the table
+    // Parse time to calculate duration or just display static 0.5h remark window
+    const newEvent = {
+      status: newRemarkStatus,
+      start: newRemarkTime,
+      end: newRemarkTime, // point event/remark
+      hours: 0,
+      location: `${newRemarkLocation} (Remark: ${newRemarkNote})`
+    };
+    cur.events = [...(cur.events || []), newEvent];
+    
     updated[selectedDayIdx] = cur;
     setLocalLogs(updated);
     setShowModal(false);
@@ -878,8 +930,34 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
               </div>
               <div className="modal-form-group">
                 <label>LOCATION</label>
-                <input type="text" placeholder="City, State" value={newRemarkLocation}
-                  onChange={e => setNewRemarkLocation(e.target.value)} required />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input 
+                    type="text" 
+                    placeholder="City, State" 
+                    value={newRemarkLocation}
+                    onChange={e => setNewRemarkLocation(e.target.value)} 
+                    required 
+                    style={{ flex: 1 }}
+                  />
+                  <button 
+                    type="button" 
+                    onClick={handleAutoFetchLocation}
+                    disabled={fetchingLoc}
+                    style={{
+                      padding: '8px 12px',
+                      backgroundColor: '#ff6b00',
+                      border: 'none',
+                      borderRadius: '6px',
+                      color: '#fff',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {fetchingLoc ? 'Fetching...' : 'Auto Fetch'}
+                  </button>
+                </div>
               </div>
               <div className="modal-form-group">
                 <label>NOTES</label>

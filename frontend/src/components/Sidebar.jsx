@@ -59,12 +59,12 @@ const Sidebar = ({ activeTab, onTabChange, onNewDispatch }) => {
         >
           <FiClock className="nav-btn-icon" /> History
         </button>
-        <button
+        {/* <button
           className={`nav-button-item ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => onTabChange('settings')}
         >
           <FiSettings className="nav-btn-icon" /> Settings
-        </button>
+        </button> */}
       </nav>
 
       {/* Sidebar Footer Actions */}
