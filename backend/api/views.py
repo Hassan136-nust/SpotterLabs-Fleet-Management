@@ -44,8 +44,12 @@ class PlanTripAPIView(APIView):
         dropoff_coords = geocode_address(dropoff_loc)
         
         if not current_coords or not pickup_coords or not dropoff_coords:
+            missing = []
+            if not current_coords: missing.append(f"current_location: '{current_loc}'")
+            if not pickup_coords:  missing.append(f"pickup_location: '{pickup_loc}'")
+            if not dropoff_coords: missing.append(f"dropoff_location: '{dropoff_loc}'")
             return Response(
-                {"error": "Failed to geocode one or more of the specified locations. Please verify spelling."},
+                {"error": f"Failed to geocode: {', '.join(missing)}. Please verify spelling or try a more specific address (e.g. 'Chicago, IL, USA')."},
                 status=status.HTTP_400_BAD_REQUEST
             )
             
@@ -123,8 +127,9 @@ class PlanTripAPIView(APIView):
             
             return Response(trip_plan, status=status.HTTP_200_OK)
         except Exception as e:
+            import traceback
             return Response(
-                {"error": f"Failed to run HOS simulation engine: {str(e)}"},
+                {"error": f"HOS engine error: {str(e)}", "detail": traceback.format_exc()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
