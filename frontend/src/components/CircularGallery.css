@@ -15,3 +15,28 @@
   outline: 2px solid #ff5500;
   outline-offset: 4px;
 }
+
+/* ═══════════════════════════════════════════
+   GALLERY CANVAS WRAPPER — responsive height
+═══════════════════════════════════════════ */
+.gallery-canvas-wrapper {
+  height: 520px;
+}
+
+@media (max-width: 768px) {
+  .gallery-canvas-wrapper {
+    height: 340px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gallery-canvas-wrapper {
+    height: 260px;
+  }
+}
+
+/* Prevent gallery from overflowing page on mobile */
+.circular-gallery canvas {
+  max-width: 100%;
+  touch-action: pan-y; /* allow vertical scroll, capture horizontal drag */
+}

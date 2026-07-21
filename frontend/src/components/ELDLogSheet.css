@@ -146,3 +146,70 @@
   font-weight: 700;
   color: #ffffff;
 }
+
+/* ═══════════════════════════════════════════
+   MOBILE RESPONSIVE — ELDLogSheet
+═══════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .eld-sheet-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .eld-sheet-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .eld-day-title {
+    font-size: 1rem;
+  }
+
+  /* Grid scrolls horizontally — the SVG needs min-width to stay readable */
+  .eld-grid-container {
+    flex-direction: column;
+    gap: 10px;
+    overflow-x: auto;
+  }
+
+  .eld-row-labels {
+    width: 100%;
+    height: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .eld-row-label-text {
+    position: static;
+    font-size: 0.6875rem;
+    padding: 2px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  /* Allow SVG to scroll */
+  .eld-svg-wrapper {
+    min-width: 680px;
+    height: 170px;
+    flex-shrink: 0;
+  }
+
+  /* Totals grid wraps */
+  .eld-totals-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .eld-totals-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .eld-total-val {
+    font-size: 0.95rem;
+  }
+}

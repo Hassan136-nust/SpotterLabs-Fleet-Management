@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   FiLayout,
@@ -7,81 +7,113 @@ import {
   FiFileText,
   FiClock,
   FiSettings,
-  FiPlus
+  FiPlus,
+  FiMenu,
+  FiX
 } from 'react-icons/fi';
 import './Sidebar.css';
 
 const Sidebar = ({ activeTab, onTabChange, onNewDispatch }) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close sidebar when tab changes on mobile
+  const handleTabChange = (tab) => {
+    onTabChange(tab);
+    setMobileOpen(false);
+  };
+
+  // Lock body scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
 
   const handleConfirmNewDispatch = () => {
     setShowConfirmModal(false);
+    setMobileOpen(false);
     if (onNewDispatch) onNewDispatch();
   };
 
   return (
-    <aside className="app-sidebar">
-      {/* Brand Header */}
-      <div className="sidebar-brand-header">
-        <span className="brand-logo-text">Spotter.ai</span>
-        <span className="brand-sub-text">FLEET MANAGEMENT</span>
-      </div>
+    <>
+      {/* ── Hamburger button (mobile only) ── */}
+      <button
+        className="sidebar-mobile-toggle"
+        onClick={() => setMobileOpen(prev => !prev)}
+        aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+      >
+        {mobileOpen ? <FiX /> : <FiMenu />}
+      </button>
 
-      {/* Navigation Links */}
-      <nav className="sidebar-navigation">
-        <button
-          className={`nav-button-item ${activeTab === 'homepage' ? 'active' : ''}`}
-          onClick={() => onTabChange('homepage')}
-        >
-          <FiLayout className="nav-btn-icon" /> Homepage
-        </button>
-        <button
-          className={`nav-button-item ${activeTab === 'plan-trip' ? 'active' : ''}`}
-          onClick={() => onTabChange('plan-trip')}
-        >
-          <FiMap className="nav-btn-icon" /> Plan Trip
-        </button>
-        <button
-          className={`nav-button-item ${activeTab === 'routes' ? 'active' : ''}`}
-          onClick={() => onTabChange('routes')}
-        >
-          <FiCompass className="nav-btn-icon" /> Routes
-        </button>
-        <button
-          className={`nav-button-item ${activeTab === 'eld-logs' ? 'active' : ''}`}
-          onClick={() => onTabChange('eld-logs')}
-        >
-          <FiFileText className="nav-btn-icon" /> ELD Logs
-        </button>
-        <button
-          className={`nav-button-item ${activeTab === 'history' ? 'active' : ''}`}
-          onClick={() => onTabChange('history')}
-        >
-          <FiClock className="nav-btn-icon" /> History
-        </button>
-        {/* <button
-          className={`nav-button-item ${activeTab === 'settings' ? 'active' : ''}`}
-          onClick={() => onTabChange('settings')}
-        >
-          <FiSettings className="nav-btn-icon" /> Settings
-        </button> */}
-      </nav>
+      {/* ── Backdrop overlay (mobile only) ── */}
+      <div
+        className={`sidebar-overlay ${mobileOpen ? 'visible' : ''}`}
+        onClick={() => setMobileOpen(false)}
+      />
 
-      {/* Sidebar Footer Actions */}
-      <div className="sidebar-bottom-actions">
-        <button className="btn-new-dispatch" onClick={() => setShowConfirmModal(true)}>
-          <FiPlus className="plus-icon" /> New Dispatch
-        </button>
+      {/* ── Sidebar panel ── */}
+      <aside className={`app-sidebar ${mobileOpen ? 'mobile-open' : ''}`}>
+        {/* Brand Header */}
+        <div className="sidebar-brand-header">
+          <span className="brand-logo-text">Spotter.ai</span>
+          <span className="brand-sub-text">FLEET MANAGEMENT</span>
+        </div>
 
-        {/* User Profile */}
-        <div className="user-profile-widget">
-          <div className="profile-avatar-circle">SL</div>
-          <div className="profile-user-details">
-            <div className="profile-username">Spotter Labs</div>
-            <div className="profile-title">Fleet Supervisor</div>
+        {/* Navigation Links */}
+        <nav className="sidebar-navigation">
+          <button
+            className={`nav-button-item ${activeTab === 'homepage' ? 'active' : ''}`}
+            onClick={() => handleTabChange('homepage')}
+          >
+            <FiLayout className="nav-btn-icon" /> Homepage
+          </button>
+          <button
+            className={`nav-button-item ${activeTab === 'plan-trip' ? 'active' : ''}`}
+            onClick={() => handleTabChange('plan-trip')}
+          >
+            <FiMap className="nav-btn-icon" /> Plan Trip
+          </button>
+          <button
+            className={`nav-button-item ${activeTab === 'routes' ? 'active' : ''}`}
+            onClick={() => handleTabChange('routes')}
+          >
+            <FiCompass className="nav-btn-icon" /> Routes
+          </button>
+          <button
+            className={`nav-button-item ${activeTab === 'eld-logs' ? 'active' : ''}`}
+            onClick={() => handleTabChange('eld-logs')}
+          >
+            <FiFileText className="nav-btn-icon" /> ELD Logs
+          </button>
+          <button
+            className={`nav-button-item ${activeTab === 'history' ? 'active' : ''}`}
+            onClick={() => handleTabChange('history')}
+          >
+            <FiClock className="nav-btn-icon" /> History
+          </button>
+        </nav>
+
+        {/* Sidebar Footer Actions */}
+        <div className="sidebar-bottom-actions">
+          <button className="btn-new-dispatch" onClick={() => setShowConfirmModal(true)}>
+            <FiPlus className="plus-icon" /> New Dispatch
+          </button>
+
+          {/* User Profile */}
+          <div className="user-profile-widget">
+            <div className="profile-avatar-circle">SL</div>
+            <div className="profile-user-details">
+              <div className="profile-username">Spotter Labs</div>
+              <div className="profile-title">Fleet Supervisor</div>
+            </div>
           </div>
         </div>
-      </div>
+      </aside>
 
       {/* Confirmation Modal via Portal */}
       {showConfirmModal && createPortal(
@@ -99,7 +131,7 @@ const Sidebar = ({ activeTab, onTabChange, onNewDispatch }) => {
         </div>,
         document.body
       )}
-    </aside>
+    </>
   );
 };
 

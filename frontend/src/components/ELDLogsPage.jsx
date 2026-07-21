@@ -521,8 +521,8 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
 
   const di = driverInfo || {};
   const resolvedDriver = {
-    name:       di.driverName  || (hasRealData ? '' : 'Alex Rivera'),
-    id:         di.driverId    || (hasRealData ? '' : '#44920'),
+    name:       di.driverName  || (hasRealData ? '' : ''),
+    id:         di.driverId    || (hasRealData ? '' : ''),
     truck:      di.truckNumber || (hasRealData ? '—' : 'TRK-492'),
     coDriver:   di.coDriver    || 'None',
     carrier:    di.carrierId   || (hasRealData ? '—' : 'Spotter Labs Logistics LLC'),
@@ -537,8 +537,9 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
       : 'MANIFEST-81203');
 
   const [selectedDayIdx, setSelectedDayIdx] = useState(0);
+  // No trip yet → empty state (no mock data)
   const [localLogs, setLocalLogs] = useState(() =>
-    hasRealData ? eldResult.dailyLogs : defaultMockLogs
+    hasRealData ? eldResult.dailyLogs : []
   );
   const [showModal, setShowModal]               = useState(false);
   const [showRemarksModal, setShowRemarksModal] = useState(false);
@@ -586,7 +587,7 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
   };
 
   useEffect(() => {
-    setLocalLogs(hasRealData ? eldResult.dailyLogs : defaultMockLogs);
+    setLocalLogs(hasRealData ? eldResult.dailyLogs : []);
     setSelectedDayIdx(0);
   }, [eldResult]);
 
@@ -713,7 +714,18 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
               className={`eld-utility-btn ${saveSuccess ? 'success-btn' : ''}`}
               onClick={handleSaveProgress}
               disabled={savingProgress || !hasRealData}
-              style={{ backgroundColor: saveSuccess ? '#10b981' : '#f97316', color: 'white', border: 'none', marginLeft: '12px', padding: '6px 16px', borderRadius: '4px', fontWeight: 'bold' }}
+              title={!hasRealData ? 'Plan a trip first to save progress' : ''}
+              style={{
+                backgroundColor: !hasRealData ? '#2b201a' : saveSuccess ? '#10b981' : '#f97316',
+                color: !hasRealData ? '#8c7365' : 'white',
+                border: `1px solid ${!hasRealData ? '#3a2a20' : 'transparent'}`,
+                marginLeft: '12px',
+                padding: '6px 16px',
+                borderRadius: '4px',
+                fontWeight: 'bold',
+                cursor: !hasRealData ? 'not-allowed' : 'pointer',
+                opacity: !hasRealData ? 0.5 : 1,
+              }}
             >
               {savingProgress ? 'SAVING...' : saveSuccess ? '✓ SAVED' : 'SAVE PROGRESS'}
             </button>
@@ -730,7 +742,22 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
 
         <div className="eld-content-viewport">
 
-          {/* HOS Clock Cards */}
+          {/* ── Empty state when no trip has been planned yet ── */}
+          {!hasRealData && (
+            <div className="eld-empty-state-banner">
+              <div className="eld-empty-icon">📋</div>
+              <h3 className="eld-empty-title">No Active Log</h3>
+              <p className="eld-empty-desc">
+                Plan a trip first to generate FMCSA-compliant ELD logs automatically.
+                All daily status, drive times, and HOS clocks will appear here.
+              </p>
+              <button className="eld-empty-cta" onClick={() => onTabChange('plan-trip')}>
+                GO TO TRIP PLANNER →
+              </button>
+            </div>
+          )}
+
+          {/* HOS Clock Cards — always visible, zeros until trip is planned */}
           <section className="eld-clocks-strip-grid">
             {[
               { lbl: 'OFF DUTY',      val: totals.OFF, max: 24, color: STATUS_COLORS.OFF },
@@ -749,7 +776,8 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
             ))}
           </section>
 
-          {/* Log Sheet Card */}
+          {/* Log Sheet Card — only shown when a trip has been planned */}
+          {hasRealData && (
           <section className="eld-graph-card-main">
 
             <div className="eld-graph-card-header">
@@ -840,9 +868,10 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
               ))}
             </div>
           </section>
+          )} {/* end hasRealData — log sheet only shown after trip planned */}
 
-          {/* Remarks & Events Table */}
-          <section className="eld-annotations-card-large">
+          {/* Remarks & Events Table — only shown with real data */}
+          {hasRealData && <section className="eld-annotations-card-large">
             <div className="annotations-header">
               <div className="annotations-title-widget">
                 <FiFileText className="annotations-icon" />
@@ -904,7 +933,7 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
                 <FiPlus />
               </button>
             </div>
-          </section>
+          </section>} {/* end hasRealData — annotations */}
 
         </div>
       </div>

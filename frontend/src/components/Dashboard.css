@@ -963,3 +963,246 @@ html {
 }
 
 
+
+/* ═══════════════════════════════════════════
+   MOBILE RESPONSIVE — Homepage / Dashboard
+═══════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* Navbar */
+  .top-navbar {
+    width: 94%;
+    top: 10px;
+    border-radius: 12px;
+  }
+
+  .navbar-links {
+    display: none;
+  }
+
+  .navbar-container {
+    padding: 0 16px;
+  }
+
+  /* Hero full-bg */
+  .hero-section-full-bg {
+    padding: 80px 20px 160px 20px;
+    min-height: 480px;
+    height: auto;
+  }
+
+  .hero-title-all-caps {
+    font-size: clamp(1.6rem, 7vw, 2.4rem);
+  }
+
+  .hero-description-caps {
+    font-size: 0.8125rem;
+  }
+
+  .hero-buttons-caps {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .btn-orange-filled-caps {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-bottom-right-specs {
+    right: 20px;
+    bottom: 20px;
+    gap: 20px;
+  }
+
+  .spec-val-caps {
+    font-size: 1.25rem;
+  }
+
+  /* Content container */
+  .content-container {
+    padding: 0 16px;
+  }
+
+  /* Stats — 2 col */
+  .stats-grid-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 28px 0;
+    margin-bottom: 48px;
+  }
+
+  .stat-val-main {
+    font-size: 1.5rem;
+  }
+
+  /* Capabilities section */
+  .capabilities-centered-section {
+    padding-bottom: 48px;
+  }
+
+  .capabilities-grid-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .flex-two-columns {
+    grid-column: span 1;
+  }
+
+  /* CTA section */
+  .cta-modern-section {
+    padding: 40px 20px;
+    margin-bottom: 48px;
+  }
+
+  .cta-modern-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-modern-orange,
+  .btn-modern-outline {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  /* Hero centered variant */
+  .hero-section-centered {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 48px 0 32px;
+  }
+
+  .hero-buttons-main {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .btn-plan-trip,
+  .btn-watch-demo {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-right-media {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hero-title-all-caps {
+    font-size: 1.5rem;
+  }
+
+  .hero-title-main {
+    font-size: 1.75rem;
+  }
+
+  .section-title-large {
+    font-size: 1.4rem;
+  }
+
+  .footer-top-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Mobile navbar toggle button ── */
+.navbar-mobile-toggle {
+  display: none;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.navbar-mobile-toggle:hover {
+  border-color: #ff6b00;
+  color: #ff6b00;
+}
+
+/* ── Mobile dropdown nav ── */
+.navbar-mobile-dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  background-color: rgba(0,0,0,0.97);
+  border-radius: 0 0 16px 16px;
+}
+
+.navbar-mobile-dropdown a {
+  color: rgba(255,255,255,0.85);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 10px 8px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.navbar-mobile-dropdown a:hover {
+  background-color: rgba(255,107,0,0.1);
+  color: #ff6b00;
+}
+
+.navbar-btn-orange.mobile-full {
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  text-align: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .navbar-mobile-toggle {
+    display: flex;
+  }
+
+  /* Hide desktop nav links and the desktop "Get Started" btn */
+  .navbar-links {
+    display: none;
+  }
+
+  .navbar-actions .navbar-btn-orange:not(.mobile-full) {
+    display: none;
+  }
+
+  /* Keep navbar-container a single horizontal row */
+  .top-navbar {
+    height: auto;
+  }
+
+  .navbar-container {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* logo on left, toggle on right — vertically centered */
+  .navbar-logo {
+    display: flex;
+    align-items: center;
+  }
+
+  .navbar-actions {
+    display: flex;
+    align-items: center;
+  }
+}

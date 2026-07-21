@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   FiMap,
   FiPlay,
@@ -9,7 +9,9 @@ import {
   FiArrowRight,
   FiGlobe,
   FiGithub,
-  FiDroplet
+  FiDroplet,
+  FiMenu,
+  FiX
 } from 'react-icons/fi';
 import CircularGallery from './CircularGallery';
 import './Dashboard.css'; // Reuse homepage styles
@@ -37,6 +39,8 @@ const galleryItems = [
 ];
 
 const Homepage = ({ onTabChange }) => {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
   return (
     <div className="dashboard-root-layout-no-sidebar">
       {/* Top Navbar */}
@@ -55,8 +59,29 @@ const Homepage = ({ onTabChange }) => {
 
           <div className="navbar-actions">
             <button className="navbar-btn-orange" onClick={() => onTabChange('plan-trip')}>Get Started</button>
+            {/* Mobile hamburger */}
+            <button
+              className="navbar-mobile-toggle"
+              onClick={() => setMobileNavOpen(p => !p)}
+              aria-label="Toggle menu"
+            >
+              {mobileNavOpen ? <FiX /> : <FiMenu />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        {mobileNavOpen && (
+          <div className="navbar-mobile-dropdown">
+            <a href="#features"   onClick={() => setMobileNavOpen(false)}>Features</a>
+            <a href="#how-it-works" onClick={() => setMobileNavOpen(false)}>How It Works</a>
+            <a href="#documentation" onClick={() => setMobileNavOpen(false)}>Documentation</a>
+            <a href="#contact"    onClick={() => setMobileNavOpen(false)}>Contact</a>
+            <button className="navbar-btn-orange mobile-full" onClick={() => { onTabChange('plan-trip'); setMobileNavOpen(false); }}>
+              Get Started
+            </button>
+          </div>
+        )}
       </nav>
 
       {/* Main Container */}
@@ -148,7 +173,7 @@ const Homepage = ({ onTabChange }) => {
             Streamlining the logistics chain through advanced telemetry and automated decision making. Drag or scroll to explore capabilities.
           </p>
 
-          <div style={{ height: '520px', position: 'relative', width: '100%', marginTop: '30px' }}>
+          <div className="gallery-canvas-wrapper" style={{ position: 'relative', width: '100%', marginTop: '30px' }}>
             <CircularGallery
               items={galleryItems}
               bend={3}

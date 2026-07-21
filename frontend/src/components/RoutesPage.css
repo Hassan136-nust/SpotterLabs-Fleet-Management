@@ -698,3 +698,199 @@
 .action-grid-btn:hover .text-red {
   color: #f87171;
 }
+
+/* ═══════════════════════════════════════════
+   MOBILE RESPONSIVE — RoutesPage
+═══════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .routes-page-layout {
+    flex-direction: column;
+    height: auto;
+    overflow: auto;
+  }
+
+  .routes-main-panel {
+    height: auto;
+  }
+
+  .routes-top-header {
+    padding: 0 16px 0 60px;
+  }
+
+  .routes-search-container {
+    width: 100%;
+    max-width: 200px;
+  }
+
+  .routes-user-info {
+    display: none;
+  }
+
+  .routes-content-viewport {
+    padding: 16px;
+  }
+
+  /* Map shorter on mobile */
+  .routes-map-container-section {
+    height: 220px;
+  }
+
+  /* Stats 2-col */
+  .routes-stats-strip-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .routes-stat-val {
+    font-size: 1.15rem;
+  }
+
+  /* Bottom workspace single column */
+  .routes-bottom-workspace {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /* Hide floating map overlays that collide */
+  .map-float-stats-row {
+    display: none;
+  }
+
+  .map-float-card-route {
+    left: 12px;
+    top: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .routes-stats-strip-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .action-buttons-grid-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .routes-map-container-section {
+    height: 180px;
+  }
+}
+
+/* ── Empty state ── */
+.routes-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.routes-empty-icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.routes-empty-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+}
+
+.routes-empty-desc {
+  font-size: 0.8125rem;
+  color: #8c7365;
+  max-width: 340px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.routes-empty-cta {
+  margin-top: 8px;
+  background-color: #ff6b00;
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.routes-empty-cta:hover {
+  background-color: #e05e00;
+}
+
+/* ── Stop summary card ── */
+.routes-stops-summary-card {
+  background-color: #150f0c;
+  border: 1px solid #2b201a;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.stops-chips-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.stop-chip {
+  background-color: #1a120e;
+  border: 1px solid #2b201a;
+  border-radius: 8px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.stop-chip-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.stop-chip-lbl {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #8c7365;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── Cancel Route full-width button ── */
+.btn-cancel-route-full {
+  width: 100%;
+  background-color: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  border-radius: 8px;
+  padding: 14px 20px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.03em;
+}
+
+.btn-cancel-route-full:hover {
+  background-color: rgba(239, 68, 68, 0.08);
+  border-color: #ef4444;
+}
+
+.cancel-route-icon {
+  font-size: 1.1rem;
+}

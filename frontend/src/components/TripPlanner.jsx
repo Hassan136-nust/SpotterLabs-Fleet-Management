@@ -316,16 +316,9 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
         
         {/* Top Navbar */}
         <header className="planner-top-header">
-          <div className="search-bar-container">
-            <FiSearch className="search-bar-icon" />
-            <input 
-              type="text" 
-              placeholder="Search loads, drivers, or trucks..." 
-              className="search-input-field" 
-            />
-          </div>
+          
           <div className="hdr-widgets">
-            <button className="hdr-bell-widget"><FiBell /></button>
+           
             <button className="hdr-user-widget"><FiUser /></button>
           </div>
         </header>

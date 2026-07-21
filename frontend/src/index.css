@@ -208,3 +208,57 @@ code {
   max-width: 1000px;
 }
 
+
+/* ═══════════════════════════════════════════
+   GLOBAL MOBILE BASE — index.css
+═══════════════════════════════════════════ */
+
+/* Ensure the app never overflows horizontally */
+html, body {
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* App root fills screen */
+.app-root {
+  width: 100%;
+  min-height: 100svh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* All pages that use sidebar layout need padding-top
+   so the hamburger button doesn't overlap content */
+@media (max-width: 768px) {
+  .planner-main-panel,
+  .routes-main-panel,
+  .eld-main-panel,
+  .history-main-panel {
+    padding-left: 0 !important;
+  }
+
+  /* Tab content page (placeholder pages) */
+  .tab-page-content {
+    padding: 20px 16px;
+  }
+}
+
+/* Touch-friendly: make all interactive elements at least 44px tall */
+@media (max-width: 768px) {
+  .nav-button-item,
+  .btn-new-dispatch,
+  .planner-btn-orange,
+  .btn-push-to-eld,
+  .eld-utility-btn,
+  .btn-modern-orange,
+  .btn-modern-outline,
+  .btn-orange-filled-caps,
+  .action-grid-btn,
+  .navbar-btn-orange {
+    min-height: 44px;
+  }
+
+  input, select, textarea {
+    font-size: 16px !important; /* prevents iOS zoom on focus */
+  }
+}

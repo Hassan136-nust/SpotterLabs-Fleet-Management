@@ -986,3 +986,164 @@
 }
 
 
+
+/* ═══════════════════════════════════════════
+   MOBILE RESPONSIVE — ELDLogsPage
+═══════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .eld-page-layout {
+    flex-direction: column;
+    height: auto;
+    overflow: auto;
+  }
+
+  .eld-main-panel {
+    height: auto;
+  }
+
+  .eld-top-header {
+    padding: 0 12px 0 60px;
+    height: auto;
+    min-height: 56px;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  /* Hide search on small screens, keep title + compliance pill */
+  .eld-search-container {
+    display: none;
+  }
+
+  .eld-user-info {
+    display: none;
+  }
+
+  .system-compliant-pill {
+    font-size: 0.5625rem;
+    padding: 4px 8px;
+  }
+
+  .eld-content-viewport {
+    padding: 14px;
+  }
+
+  /* Clocks 2-col */
+  .eld-clocks-strip-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .eld-clock-val {
+    font-size: 1.15rem;
+  }
+
+  /* Graph card header wraps */
+  .eld-graph-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .day-selector-tabs {
+    flex-wrap: wrap;
+  }
+
+  .eld-graph-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* FMCSA header grid 2 cols */
+  .fmcsa-header-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fmcsa-header-cell.cell-sig {
+    grid-column: span 1;
+  }
+
+  /* Annotations table — scroll horizontally */
+  .annotations-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .annotations-table th,
+  .annotations-table td {
+    padding: 10px 12px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  /* Modal full width */
+  .eld-modal-container {
+    max-width: 95vw;
+    padding: 20px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .eld-clocks-strip-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .eld-graph-summaries-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+/* ── No-trip empty state banner ── */
+.eld-empty-state-banner {
+  background: linear-gradient(135deg, #120c09 0%, #1a0f0a 100%);
+  border: 1px dashed #ff6b00;
+  border-radius: 12px;
+  padding: 40px 32px;
+  text-align: center;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.eld-empty-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.eld-empty-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.eld-empty-desc {
+  font-size: 0.8125rem;
+  color: #8c7365;
+  max-width: 420px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.eld-empty-cta {
+  margin-top: 8px;
+  background-color: #ff6b00;
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.eld-empty-cta:hover {
+  background-color: #e05e00;
+}

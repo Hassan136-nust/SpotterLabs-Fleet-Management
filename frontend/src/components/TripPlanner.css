@@ -659,3 +659,150 @@
 }
 
 
+
+/* ═══════════════════════════════════════════
+   MOBILE RESPONSIVE — TripPlanner
+═══════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .trip-planner-page-layout {
+    flex-direction: column;
+    height: auto;
+    overflow: auto;
+  }
+
+  .planner-main-panel {
+    height: auto;
+    padding-left: 0;
+  }
+
+  .planner-top-header {
+    padding: 0 16px 0 60px;
+  }
+
+  .search-bar-container {
+    width: 100%;
+    max-width: 220px;
+  }
+
+  /* Stack form and map vertically */
+  .planner-workspace-split {
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+  }
+
+  .planner-form-panel {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid #2b201a;
+    flex-shrink: unset;
+  }
+
+  /* Map panel: explicit height, no overflow clipping */
+  .planner-map-panel {
+    height: 380px;
+    min-height: 380px;
+    flex-shrink: 0;
+    flex-grow: 0;
+    position: relative;
+    width: 100%;
+    /* Remove bottom padding so overlay doesn't eat map */
+    padding-bottom: 0;
+  }
+
+  /* Map wrapper fills the panel */
+  .planner-map-panel .map-wrapper {
+    height: 380px !important;
+    min-height: 380px;
+    border-radius: 0;
+  }
+
+  .planner-map-panel .leaflet-map-container {
+    height: 380px !important;
+    min-height: 380px;
+  }
+
+  /* Pull metrics overlay OUT of absolute positioning on mobile —
+     render it as a normal block below the map */
+  .map-bottom-dashboard-overlay {
+    position: static !important;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    padding: 12px 14px;
+    background-color: #120c09;
+    border-top: 1.5px solid rgba(255, 107, 0, 0.2);
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .metric-col {
+    border-right: 1px solid #2b201a;
+    padding: 8px 10px;
+  }
+
+  .metric-col:nth-child(3),
+  .metric-col:nth-child(6) {
+    border-right: none;
+  }
+
+  .metric-val {
+    font-size: 0.95rem;
+  }
+
+  .metric-lbl {
+    font-size: 0.5rem;
+  }
+
+  /* Inputs single col */
+  .planner-row-inputs {
+    grid-template-columns: 1fr;
+  }
+
+  /* Floating action buttons — hide on mobile, they block map */
+  .map-floating-actions {
+    display: none;
+  }
+
+  /* Warning modal */
+  .warning-modal-content {
+    padding: 24px 16px;
+    max-width: 95vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .planner-map-panel {
+    height: 300px;
+    min-height: 300px;
+  }
+
+  .planner-map-panel .map-wrapper {
+    height: 300px !important;
+    min-height: 300px;
+  }
+
+  .planner-map-panel .leaflet-map-container {
+    height: 300px !important;
+    min-height: 300px;
+  }
+
+  .map-bottom-dashboard-overlay {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0;
+    padding: 10px 12px;
+  }
+
+  .metric-col:nth-child(2),
+  .metric-col:nth-child(4),
+  .metric-col:nth-child(6) {
+    border-right: none;
+  }
+
+  .metric-col:nth-child(3) {
+    border-right: 1px solid #2b201a;
+  }
+}
