@@ -1,53 +1,73 @@
+/* ── Fixed fullscreen overlay — sits above everything ── */
 .truck-anim-outer {
-  height: 200vh;
-  position: relative;
-  background-color: #000000;
-  z-index: 10;
-}
-
-@media (max-width: 768px) {
-  .truck-anim-outer {
-    height: 150vh;
-  }
-}
-
-/* During exit, pin it to viewport to slide up as a curtain over everything */
-.truck-anim-outer.exit-active {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100vw;
   height: 100vh;
+  background-color: #000000;
   z-index: 99999;
-  pointer-events: none;
+  overflow: hidden;
+  transform: translateY(0);
+  transition: none;
+}
+
+/* Slide up like a curtain when exiting */
+.truck-anim-outer.exit-active {
   transform: translateY(-100%);
   transition: transform 1.2s cubic-bezier(0.85, 0, 0.15, 1);
+  pointer-events: none;
 }
 
-.truck-anim-container {
-  height: 100vh;
-  position: sticky;
-  top: 0;
-  overflow: hidden;
-  display: block;
-}
-
+/* Canvas fills entire overlay */
 .truck-anim-canvas {
   display: block;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  position: relative;
-  z-index: 0;
   will-change: contents;
   backface-visibility: hidden;
 }
 
-/* Get Started Button - Lower Right Corner */
+/* ── Scroll hint (shown before button appears) ── */
+.truck-scroll-hint {
+  position: absolute;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  animation: hint-pulse 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.scroll-hint-arrow {
+  font-size: 1.5rem;
+  color: rgba(255, 107, 0, 0.85);
+}
+
+.scroll-hint-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: rgba(255, 107, 0, 0.7);
+}
+
+@keyframes hint-pulse {
+  0%, 100% { opacity: 0.5; transform: translateX(-50%) translateY(0); }
+  50%       { opacity: 1;   transform: translateX(-50%) translateY(6px); }
+}
+
+/* ── Get Started button ── */
 .get-started-truck-btn {
   position: absolute;
   bottom: 48px;
   right: 48px;
-  z-index: 99;
+  z-index: 10;
   background-color: #000000;
   border: 2px solid #ff6b00;
   color: #ff6b00;
@@ -61,8 +81,14 @@
   align-items: center;
   gap: 16px;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(255, 107, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(255, 107, 0, 0.25);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  animation: btn-fade-in 0.5s ease-out both;
+}
+
+@keyframes btn-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .btn-truck-icon-wrapper {
@@ -76,12 +102,11 @@
   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* Hover effects */
 .get-started-truck-btn:hover {
   background-color: #ff6b00;
   color: #000000;
-  box-shadow: 0 8px 30px rgba(255, 107, 0, 0.4);
-  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 30px rgba(255, 107, 0, 0.45);
+  transform: translateY(-3px) scale(1.04);
 }
 
 .get-started-truck-btn:hover .btn-truck-svg {
@@ -99,5 +124,9 @@
     padding: 12px 20px;
     font-size: 0.875rem;
     gap: 10px;
+  }
+
+  .truck-scroll-hint {
+    bottom: 32px;
   }
 }

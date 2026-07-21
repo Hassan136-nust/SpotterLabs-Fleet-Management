@@ -222,8 +222,6 @@ html, body {
 /* App root fills screen */
 .app-root {
   width: 100%;
-  min-height: 100svh;
-  overflow-x: hidden;
   position: relative;
 }
 
