@@ -9,8 +9,7 @@ import {
   FiLayers, 
   FiCompass, 
   FiCloudRain,
-  FiPlay,
-  FiNavigation
+  FiPlay
 } from 'react-icons/fi';
 import Sidebar from './Sidebar';
 import MapContainer from './MapContainer';
@@ -61,8 +60,8 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
   const [error, setError] = useState(null);
   const [driverIdError, setDriverIdError] = useState(false);
   const [warningModal, setWarningModal] = useState({ show: false, hours: 0 });
-  const [isNavigating, setIsNavigating] = useState(false);
   const [routeReady, setRouteReady] = useState(false);
+  const [dispatchId, setDispatchId] = useState(null);
 
   // Autocomplete and Dynamic suggestions
   const [suggestions, setSuggestions] = useState({ current: [], pickup: [], dropoff: [] });
@@ -226,6 +225,9 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
 
       setMetrics(calculatedMetrics);
 
+      // Store dispatch_id for journey start and auto-complete
+      setDispatchId(data.dispatch_id);
+
       // Mark route as ready to show Start Journey button
       setRouteReady(true);
 
@@ -280,6 +282,32 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Start Journey: go to history immediately, auto-complete after real drive time
+  const handleStartJourney = () => {
+    // Navigate to history tab immediately
+    if (onTabChange) onTabChange('history');
+
+    // Hide the Start Journey button
+    setRouteReady(false);
+
+    // Auto-complete trip after the actual drive time elapses (real time)
+    if (dispatchId && metrics.driveTime > 0) {
+      const driveDurationMs = metrics.driveTime * 60 * 60 * 1000;
+      setTimeout(async () => {
+        try {
+          const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+          await fetch(`${API_BASE}/api/complete-trip/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dispatch_id: dispatchId })
+          });
+        } catch (err) {
+          console.error('Auto-complete trip failed:', err);
+        }
+      }, driveDurationMs);
     }
   };
 
@@ -553,24 +581,15 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
               </button>
 
               {/* Start Journey Button - shown only after route is generated */}
-              {routeReady && !isNavigating && (
+              {routeReady && (
                 <button
                   type="button"
                   className="planner-btn-start-journey"
-                  onClick={() => setIsNavigating(true)}
+                  onClick={handleStartJourney}
                 >
                   <FiPlay className="btn-play-icon" />
                   START JOURNEY
                 </button>
-              )}
-
-              {/* Navigation Active Indicator */}
-              {isNavigating && (
-                <div className="navigation-active-banner">
-                  <FiNavigation className="nav-active-icon" />
-                  <span>Navigation Active — Truck En Route</span>
-                  <button className="nav-end-btn" onClick={() => setIsNavigating(false)}>END</button>
-                </div>
               )}
             </form>
 
@@ -645,7 +664,6 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
               dropoffLoc={locations.dropoff}
               routeGeometry={routeGeometry}
               stops={plannedStops}
-              isNavigating={isNavigating}
             />
 
             {/* Floating Top Bar on Map */}

@@ -2,16 +2,13 @@ import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import './MapContainer.css';
 
-const MapContainer = ({ currentLoc, pickupLoc, dropoffLoc, routeGeometry, stops, isNavigating }) => {
+const MapContainer = ({ currentLoc, pickupLoc, dropoffLoc, routeGeometry, stops }) => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const layersRef = useRef({
     markers: [],
     route: null
   });
-  const navAnimRef = useRef(null);     // animation frame ID
-  const navMarkerRef = useRef(null);   // moving truck marker
-  const navIndexRef = useRef(0);       // current coordinate index
 
   // Inject Leaflet CSS dynamically if not present
   useEffect(() => {
@@ -47,8 +44,6 @@ const MapContainer = ({ currentLoc, pickupLoc, dropoffLoc, routeGeometry, stops,
     mapInstanceRef.current = map;
 
     return () => {
-      if (navAnimRef.current) cancelAnimationFrame(navAnimRef.current);
-      if (navMarkerRef.current) navMarkerRef.current.remove();
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -206,105 +201,6 @@ const MapContainer = ({ currentLoc, pickupLoc, dropoffLoc, routeGeometry, stops,
       }
     }
   }, [currentLoc, routeGeometry, pickupLoc, dropoffLoc]);
-
-  // ── Google Maps-style Navigation Animation ──
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map || !routeGeometry) return;
-
-    const coords = routeGeometry.coordinates; // [lon, lat] pairs
-    if (!coords || coords.length === 0) return;
-
-    // Cleanup previous animation
-    if (navAnimRef.current) cancelAnimationFrame(navAnimRef.current);
-    if (navMarkerRef.current) { navMarkerRef.current.remove(); navMarkerRef.current = null; }
-    navIndexRef.current = 0;
-
-    if (!isNavigating) {
-      // Remove tilt class
-      if (mapRef.current) mapRef.current.classList.remove('map-nav-tilt');
-      return;
-    }
-
-    // Add tilt/perspective class to map wrapper
-    if (mapRef.current) mapRef.current.classList.add('map-nav-tilt');
-
-    // Fly to route start, high zoom
-    const startLat = coords[0][1];
-    const startLon = coords[0][0];
-    map.flyTo([startLat, startLon], 13, { animate: true, duration: 1.6 });
-
-    // Create moving truck marker HTML
-    const truckHtml = `
-      <div class="nav-truck-marker">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="#ff6b00" xmlns="http://www.w3.org/2000/svg">
-          <path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/>
-          <circle cx="5.5" cy="18.5" r="2.5"/>
-          <circle cx="18.5" cy="18.5" r="2.5"/>
-        </svg>
-      </div>
-    `;
-
-    const truckIcon = L.divIcon({
-      className: 'nav-truck-marker-wrap',
-      html: truckHtml,
-      iconSize: [36, 36],
-      iconAnchor: [18, 18]
-    });
-
-    navMarkerRef.current = L.marker([startLat, startLon], { icon: truckIcon, zIndexOffset: 1000 }).addTo(map);
-
-    // Animate truck along route: move every 80ms, step = skip every N coords for speed
-    const STEP = Math.max(1, Math.floor(coords.length / 300)); // ~300 frames total
-    let lastTime = 0;
-    const INTERVAL = 80; // ms between steps
-
-    const animate = (timestamp) => {
-      if (!navMarkerRef.current || !mapInstanceRef.current) return;
-
-      if (timestamp - lastTime >= INTERVAL) {
-        lastTime = timestamp;
-        const idx = navIndexRef.current;
-
-        if (idx >= coords.length) {
-          // Journey complete — remove tilt
-          if (mapRef.current) mapRef.current.classList.remove('map-nav-tilt');
-          return;
-        }
-
-        const lon = coords[idx][0];
-        const lat = coords[idx][1];
-        const latlng = [lat, lon];
-
-        // Move truck
-        navMarkerRef.current.setLatLng(latlng);
-
-        // Compute heading to rotate truck icon
-        if (idx + 1 < coords.length) {
-          const nextLon = coords[idx + 1][0];
-          const nextLat = coords[idx + 1][1];
-          const angle = Math.atan2(nextLon - lon, nextLat - lat) * (180 / Math.PI);
-          const el = navMarkerRef.current.getElement();
-          if (el) el.style.transform = `rotate(${angle}deg)`;
-        }
-
-        // Pan map to follow truck with offset so truck is near bottom (navigation view)
-        map.panTo(latlng, { animate: true, duration: 0.08, easeLinearity: 1 });
-
-        navIndexRef.current = idx + STEP;
-      }
-
-      navAnimRef.current = requestAnimationFrame(animate);
-    };
-
-    navAnimRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (navAnimRef.current) cancelAnimationFrame(navAnimRef.current);
-      if (navMarkerRef.current) { navMarkerRef.current.remove(); navMarkerRef.current = null; }
-      if (mapRef.current) mapRef.current.classList.remove('map-nav-tilt');
-    };
-  }, [isNavigating, routeGeometry]);
 
   return (
     <div className="map-wrapper">
