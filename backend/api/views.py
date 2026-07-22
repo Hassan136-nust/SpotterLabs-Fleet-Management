@@ -67,6 +67,13 @@ class PlanTripAPIView(APIView):
                 {"error": f"Failed to geocode: {', '.join(missing)}. Please verify spelling or try a more specific address (e.g. 'Chicago, IL, USA')."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        # Reject identical pickup and dropoff
+        if abs(pickup_coords['lat'] - dropoff_coords['lat']) < 0.01 and abs(pickup_coords['lon'] - dropoff_coords['lon']) < 0.01:
+            return Response(
+                {"error": "Pickup and destination cannot be the same location. Please enter different addresses."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
             
         # 2. Get route legs combined distance & duration
         leg1_route = get_hgv_route(
@@ -150,7 +157,8 @@ class PlanTripAPIView(APIView):
 
 class HistoryAPIView(APIView):
     def get(self, request, *args, **kwargs):
-        dispatches = TripDispatch.objects.select_related('driver').all().order_by('-created_at')
+        # Only show trips that have been started (green button pressed)
+        dispatches = TripDispatch.objects.select_related('driver').filter(is_started=True).order_by('-created_at')
         records = []
         for d in dispatches:
             records.append({
@@ -216,3 +224,15 @@ class CompleteTripAPIView(APIView):
         except TripDispatch.DoesNotExist:
             return Response({"error": "Trip dispatch not found"}, status=status.HTTP_404_NOT_FOUND)
 
+class StartTripAPIView(APIView):
+    def post(self, request, *args, **kwargs):
+        dispatch_id = request.data.get('dispatch_id')
+        if not dispatch_id:
+            return Response({"error": "dispatch_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            dispatch = TripDispatch.objects.get(id=dispatch_id)
+            dispatch.is_started = True
+            dispatch.save()
+            return Response({"message": "Trip started"}, status=status.HTTP_200_OK)
+        except TripDispatch.DoesNotExist:
+            return Response({"error": "Trip dispatch not found"}, status=status.HTTP_404_NOT_FOUND)

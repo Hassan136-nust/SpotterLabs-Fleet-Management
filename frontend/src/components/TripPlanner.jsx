@@ -140,6 +140,17 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
       return;
     }
     setDriverIdError(false);
+
+    // Validate pickup and destination are not the same
+    const normalise = (s) => s.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (
+      inputs.pickupLocation && inputs.dropoffLocation &&
+      normalise(inputs.pickupLocation) === normalise(inputs.dropoffLocation)
+    ) {
+      setError('Pickup and destination cannot be the same location. Please enter different addresses.');
+      return;
+    }
+
     setTripPlanState(prev => ({ ...prev, routeReady: false }));
     setLoading(true);
     setError(null);
@@ -332,8 +343,8 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
     return () => clearInterval(timer);
   }, [tripPlanState.tripStarted, tripPlanState.startTimestamp]);
 
-  // Start Journey: update tripPlanState so it persists across tab switching
-  const handleStartJourney = () => {
+  // Start Journey: update tripPlanState and notify backend
+  const handleStartJourney = async () => {
     const now = Date.now();
     setTripPlanState(prev => ({
       ...prev,
@@ -341,6 +352,20 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
       startTimestamp: now,
       routeReady: false
     }));
+
+    // Mark trip as started in backend so it shows in History
+    if (tripPlanState.dispatchId) {
+      try {
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        await fetch(`${API_BASE}/api/start-trip/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dispatch_id: tripPlanState.dispatchId })
+        });
+      } catch (err) {
+        console.error('Failed to mark trip as started:', err);
+      }
+    }
 
     // Auto-complete trip after the actual drive time elapses (real time)
     if (tripPlanState.dispatchId && metrics.driveTime > 0) {

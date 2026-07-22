@@ -14,6 +14,7 @@ class Driver(models.Model):
 
 class TripDispatch(models.Model):
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE, null=True, blank=True)
+    is_started = models.BooleanField(default=False)
     is_complete = models.BooleanField(default=False)
     current_location = models.CharField(max_length=255)
     pickup_location = models.CharField(max_length=255)
