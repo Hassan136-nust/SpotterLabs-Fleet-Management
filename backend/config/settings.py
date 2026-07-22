@@ -14,11 +14,9 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-k)km*o09!yi+!t6dhct$v
 # DEBUG — False in production (Render sets DEBUG=False automatically)
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'spotterlabs-fleet-management.onrender.com', '.onrender.com']
-
+ALLOWED_HOSTS = ['*']
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -43,12 +41,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# CORS — allow the Vercel frontend URL (set CORS_ALLOWED_ORIGINS env var in Render)
-_cors_origins = os.environ.get('CORS_ALLOWED_ORIGINS', '')
-if _cors_origins:
-    CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(',')]
-else:
-    CORS_ALLOW_ALL_ORIGINS = True  # dev fallback
+# CORS Settings — allow Vercel and all origins
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'config.urls'
 
@@ -72,10 +67,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
 # Database — Postgres on Render (DATABASE_URL), SQLite locally
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
 if DATABASE_URL:
@@ -91,10 +82,7 @@ else:
         }
     }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -110,22 +98,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
-
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
