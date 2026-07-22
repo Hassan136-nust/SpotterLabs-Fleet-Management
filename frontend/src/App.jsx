@@ -54,7 +54,8 @@ function App() {
     tripStarted: false,
     startTimestamp: null,
     dispatchId: null,
-    routeReady: false
+    routeReady: false,
+    eldUnsavedChanges: true
   });
 
   const handleTabChange = (tabName) => {
@@ -91,7 +92,8 @@ function App() {
       tripStarted: false,
       startTimestamp: null,
       dispatchId: null,
-      routeReady: false
+      routeReady: false,
+      eldUnsavedChanges: true
     });
     
     setEldResult(null);
@@ -136,6 +138,7 @@ function App() {
             eldResult={eldResult}
             driverInfo={driverInfo}
             tripPlanState={tripPlanState}
+            setTripPlanState={setTripPlanState}
           />
         );
 

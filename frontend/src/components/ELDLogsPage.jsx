@@ -516,7 +516,7 @@ ${daySheets}
 /* ═══════════════════════════════════════════════════════════
    MAIN PAGE
 ═══════════════════════════════════════════════════════════ */
-const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPlanState }) => {
+const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPlanState, setTripPlanState }) => {
   const hasRealData = eldResult?.dailyLogs?.length > 0;
 
   const di = driverInfo || {};
@@ -651,7 +651,7 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
     
     updated[selectedDayIdx] = cur;
     setLocalLogs(updated);
-    setHasUnsavedChanges(true); // Mark as changed after remark added
+    if (setTripPlanState) setTripPlanState(prev => ({ ...prev, eldUnsavedChanges: true })); // Mark as changed after remark added
     setShowModal(false);
     setNewRemarkLocation('');
     setNewRemarkNote('');
@@ -663,7 +663,7 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
 
   const [savingProgress, setSavingProgress] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(true); // true on first load to allow initial save
+  // hasUnsavedChanges is now managed by App state to persist across tab changes
 
   const handleSaveProgress = async () => {
     if (!eldResult?.dispatch_id) {
@@ -671,7 +671,7 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
       return;
     }
     // Block re-save if nothing changed since last save
-    if (!hasUnsavedChanges) {
+    if (!tripPlanState?.eldUnsavedChanges) {
       alert("No changes detected. Add a remark or modify the log before saving again.");
       return;
     }
@@ -685,7 +685,9 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
       });
       if (res.ok) {
         setSaveSuccess(true);
-        setHasUnsavedChanges(false); // Reset - no changes until next remark/edit
+        if (setTripPlanState) {
+          setTripPlanState(prev => ({ ...prev, eldUnsavedChanges: false, tripStarted: false })); // Reset - no changes until next remark/edit, and stop timer
+        }
         setTimeout(() => setSaveSuccess(false), 3000);
       } else {
         alert("Failed to save progress.");
@@ -724,23 +726,23 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
               disabled={savingProgress || !hasRealData}
               title={
                 !hasRealData ? 'Plan a trip first to save progress'
-                : !hasUnsavedChanges ? 'No changes — add a remark to enable save'
+                : !tripPlanState?.eldUnsavedChanges ? 'No changes — add a remark to enable save'
                 : 'Save current ELD log progress'
               }
               style={{
-                backgroundColor: !hasRealData ? '#2b201a' : saveSuccess ? '#10b981' : !hasUnsavedChanges ? '#1e2a1e' : '#f97316',
-                color: !hasRealData ? '#8c7365' : !hasUnsavedChanges ? '#4a7a4a' : 'white',
-                border: `1px solid ${!hasRealData ? '#3a2a20' : !hasUnsavedChanges ? '#2e4a2e' : 'transparent'}`,
+                backgroundColor: !hasRealData ? '#2b201a' : saveSuccess ? '#10b981' : !tripPlanState?.eldUnsavedChanges ? '#1e2a1e' : '#f97316',
+                color: !hasRealData ? '#8c7365' : !tripPlanState?.eldUnsavedChanges ? '#4a7a4a' : 'white',
+                border: `1px solid ${!hasRealData ? '#3a2a20' : !tripPlanState?.eldUnsavedChanges ? '#2e4a2e' : 'transparent'}`,
                 marginLeft: '12px',
                 padding: '6px 16px',
                 borderRadius: '4px',
                 fontWeight: 'bold',
-                cursor: (!hasRealData || !hasUnsavedChanges) ? 'not-allowed' : 'pointer',
+                cursor: (!hasRealData || !tripPlanState?.eldUnsavedChanges) ? 'not-allowed' : 'pointer',
                 opacity: !hasRealData ? 0.5 : 1,
                 transition: 'all 0.25s ease',
               }}
             >
-              {savingProgress ? 'SAVING...' : saveSuccess ? '✓ SAVED' : !hasUnsavedChanges ? 'NO CHANGES' : 'SAVE PROGRESS'}
+              {savingProgress ? 'SAVING...' : saveSuccess ? '✓ SAVED' : !tripPlanState?.eldUnsavedChanges ? 'NO CHANGES' : 'SAVE PROGRESS'}
             </button>
 
             <div className="eld-user-widget-detailed">

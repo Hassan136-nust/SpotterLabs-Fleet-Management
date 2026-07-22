@@ -245,7 +245,10 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
       setTripPlanState(prev => ({
         ...prev,
         dispatchId: data.dispatch_id,
-        routeReady: true
+        routeReady: true,
+        eldUnsavedChanges: true,
+        tripStarted: false,
+        startTimestamp: null
       }));
 
       // Trigger Modal displaying available driver hours left
