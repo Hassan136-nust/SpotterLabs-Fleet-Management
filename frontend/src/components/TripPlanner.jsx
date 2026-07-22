@@ -545,20 +545,21 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
 
               <div className="planner-row-inputs">
                 <div className="planner-input-group">
-                  <label className="planner-input-lbl">CYCLE HOURS</label>
-                  <input 
-                    type="number" 
-                    className="planner-raw-input"
-                    value={inputs.cycleHours}
-                    onChange={e => {
-                      setInputs({ ...inputs, cycleHours: e.target.value });
-                      setMetrics(prev => ({ ...prev, remainingCycle: e.target.value || 0 }));
-                    }}
-                    min="1"
-                    max="70"
-                    step="0.1"
-                    required
-                  />
+                  <label className="planner-input-lbl">CYCLE HOURS REMAINING</label>
+                  <div className="planner-input-wrapper" style={{ cursor: 'default', opacity: 0.8 }}>
+                    <input 
+                      type="number" 
+                      className="planner-raw-input"
+                      value={inputs.cycleHours}
+                      readOnly
+                      tabIndex={-1}
+                      style={{ cursor: 'default', color: '#ff6b00', fontWeight: '700' }}
+                      title="Auto-filled from driver profile. Starts at 70 hrs (full cycle)."
+                    />
+                  </div>
+                  <span style={{ fontSize: '0.55rem', color: '#8c7365', marginTop: '2px' }}>
+                    Auto-filled · enter Driver ID to load actual remaining hours
+                  </span>
                 </div>
                 <div className="planner-input-group">
                   <label className="planner-input-lbl">DEPARTURE TIME</label>
