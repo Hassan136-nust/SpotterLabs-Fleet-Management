@@ -424,6 +424,76 @@
   font-size: 0.75rem;
 }
 
+/* ── Trip Active Status Card ── */
+.trip-active-status-card {
+  background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.04));
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: trip-card-appear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes trip-card-appear {
+  0%   { transform: scale(0.92) translateY(6px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.trip-active-top-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trip-active-dot {
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: trip-dot-pulse 1.2s infinite ease-in-out;
+}
+
+@keyframes trip-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+  50%       { opacity: 0.8; transform: scale(1.15); box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+}
+
+.trip-active-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #10b981;
+}
+
+.trip-active-dest {
+  font-size: 0.75rem;
+  color: #e2e8f0;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trip-active-timer {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.trip-timer-value {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-weight: 700;
+  color: #10b981;
+  letter-spacing: 0.05em;
+}
+
+.trip-active-eta {
+  font-size: 0.68rem;
+  color: #64748b;
+}
+
 
 /* Node Preview */
 .route-nodes-preview-section {

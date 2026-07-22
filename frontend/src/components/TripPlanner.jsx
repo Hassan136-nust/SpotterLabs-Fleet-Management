@@ -284,18 +284,29 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
     }
   };
 
-  // Start Journey: go to history immediately, auto-complete after real drive time
-  const handleStartJourney = () => {
-    // Navigate to history tab immediately
-    if (onTabChange) onTabChange('history');
 
-    // Hide the Start Journey button
+  // Trip started state
+  const [tripStarted, setTripStarted] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const elapsedIntervalRef = React.useRef(null);
+
+  // Start Journey: stay on page, show status, auto-complete in background
+  const handleStartJourney = () => {
     setRouteReady(false);
+    setTripStarted(true);
+    setElapsedSeconds(0);
+
+    // Tick elapsed timer every second
+    elapsedIntervalRef.current = setInterval(() => {
+      setElapsedSeconds(prev => prev + 1);
+    }, 1000);
 
     // Auto-complete trip after the actual drive time elapses (real time)
     if (dispatchId && metrics.driveTime > 0) {
       const driveDurationMs = metrics.driveTime * 60 * 60 * 1000;
       setTimeout(async () => {
+        // Clear elapsed timer
+        clearInterval(elapsedIntervalRef.current);
         try {
           const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
           await fetch(`${API_BASE}/api/complete-trip/`, {
@@ -309,6 +320,15 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
       }, driveDurationMs);
     }
   };
+
+  // Format seconds as HH:MM:SS
+  const formatElapsed = (secs) => {
+    const h = Math.floor(secs / 3600).toString().padStart(2, '0');
+    const m = Math.floor((secs % 3600) / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  };
+
 
   // Run on mount to fetch current location via browser geolocation
   useEffect(() => {
@@ -589,6 +609,25 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
                   <FiPlay className="btn-play-icon" />
                   START JOURNEY
                 </button>
+              )}
+
+              {/* Trip Active Status - shown after journey started */}
+              {tripStarted && (
+                <div className="trip-active-status-card">
+                  <div className="trip-active-top-row">
+                    <span className="trip-active-dot" />
+                    <span className="trip-active-label">TRIP IN PROGRESS</span>
+                  </div>
+                  <div className="trip-active-dest">
+                    📍 {inputs.dropoffLocation || 'Destination'}
+                  </div>
+                  <div className="trip-active-timer">
+                    ⏱ Elapsed: <span className="trip-timer-value">{formatElapsed(elapsedSeconds)}</span>
+                  </div>
+                  <div className="trip-active-eta">
+                    ETA: {metrics.eta} · {metrics.etaDate}
+                  </div>
+                </div>
               )}
             </form>
 

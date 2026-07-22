@@ -651,6 +651,7 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
     
     updated[selectedDayIdx] = cur;
     setLocalLogs(updated);
+    setHasUnsavedChanges(true); // Mark as changed after remark added
     setShowModal(false);
     setNewRemarkLocation('');
     setNewRemarkNote('');
@@ -662,10 +663,16 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
 
   const [savingProgress, setSavingProgress] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(true); // true on first load to allow initial save
 
   const handleSaveProgress = async () => {
     if (!eldResult?.dispatch_id) {
       alert("No active dispatch ID found. Plan a trip first.");
+      return;
+    }
+    // Block re-save if nothing changed since last save
+    if (!hasUnsavedChanges) {
+      alert("No changes detected. Add a remark or modify the log before saving again.");
       return;
     }
     setSavingProgress(true);
@@ -678,6 +685,7 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
       });
       if (res.ok) {
         setSaveSuccess(true);
+        setHasUnsavedChanges(false); // Reset - no changes until next remark/edit
         setTimeout(() => setSaveSuccess(false), 3000);
       } else {
         alert("Failed to save progress.");
@@ -714,20 +722,25 @@ const ELDLogsPage = ({ onTabChange, onNewDispatch, eldResult, driverInfo, tripPl
               className={`eld-utility-btn ${saveSuccess ? 'success-btn' : ''}`}
               onClick={handleSaveProgress}
               disabled={savingProgress || !hasRealData}
-              title={!hasRealData ? 'Plan a trip first to save progress' : ''}
+              title={
+                !hasRealData ? 'Plan a trip first to save progress'
+                : !hasUnsavedChanges ? 'No changes — add a remark to enable save'
+                : 'Save current ELD log progress'
+              }
               style={{
-                backgroundColor: !hasRealData ? '#2b201a' : saveSuccess ? '#10b981' : '#f97316',
-                color: !hasRealData ? '#8c7365' : 'white',
-                border: `1px solid ${!hasRealData ? '#3a2a20' : 'transparent'}`,
+                backgroundColor: !hasRealData ? '#2b201a' : saveSuccess ? '#10b981' : !hasUnsavedChanges ? '#1e2a1e' : '#f97316',
+                color: !hasRealData ? '#8c7365' : !hasUnsavedChanges ? '#4a7a4a' : 'white',
+                border: `1px solid ${!hasRealData ? '#3a2a20' : !hasUnsavedChanges ? '#2e4a2e' : 'transparent'}`,
                 marginLeft: '12px',
                 padding: '6px 16px',
                 borderRadius: '4px',
                 fontWeight: 'bold',
-                cursor: !hasRealData ? 'not-allowed' : 'pointer',
+                cursor: (!hasRealData || !hasUnsavedChanges) ? 'not-allowed' : 'pointer',
                 opacity: !hasRealData ? 0.5 : 1,
+                transition: 'all 0.25s ease',
               }}
             >
-              {savingProgress ? 'SAVING...' : saveSuccess ? '✓ SAVED' : 'SAVE PROGRESS'}
+              {savingProgress ? 'SAVING...' : saveSuccess ? '✓ SAVED' : !hasUnsavedChanges ? 'NO CHANGES' : 'SAVE PROGRESS'}
             </button>
 
             <div className="eld-user-widget-detailed">
