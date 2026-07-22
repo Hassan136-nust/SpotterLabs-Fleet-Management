@@ -249,12 +249,14 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
       }));
 
       // Trigger Modal displaying available driver hours left
-      setDriverHoursModal({
-        show: true,
-        hoursLeft: driverRemainingHours.toFixed(1),
-        driverName: fetchedDriverName || driverInfo?.driverName || 'Driver',
-        driverId: driverInfo?.driverId || ''
-      });
+      if (driverRemainingHours < 70) {
+        setDriverHoursModal({
+          show: true,
+          hoursLeft: driverRemainingHours.toFixed(1),
+          driverName: fetchedDriverName || driverInfo?.driverName || 'Driver',
+          driverId: driverInfo?.driverId || ''
+        });
+      }
 
       // Trigger safety warning modal if remaining hours are negative (cycle exceeded)
       if (calculatedMetrics.remainingCycle < 0) {

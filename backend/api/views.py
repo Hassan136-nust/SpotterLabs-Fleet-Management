@@ -6,7 +6,22 @@ from .services.routing import geocode_address, get_hgv_route
 from .services.hos_engine import plan_trip
 from .models import TripDispatch, Driver
 
+def catch_all_exceptions(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            import traceback
+            from rest_framework.response import Response
+            from rest_framework import status
+            return Response(
+                {"error": f"Server error: {str(e)}", "detail": traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    return wrapper
+
 class PlanTripAPIView(APIView):
+    @catch_all_exceptions
     def post(self, request, *args, **kwargs):
         serializer = TripPlanRequestSerializer(data=request.data)
         if not serializer.is_valid():
