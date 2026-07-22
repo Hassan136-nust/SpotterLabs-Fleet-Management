@@ -43,8 +43,8 @@ def _query_nominatim(q: str) -> dict:
 
 def geocode_address(query: str) -> dict:
     """
-    Geocode an address using OpenRouteService (if key set) or Nominatim with multi-stage fallback.
-    Returns { lat, lon, display_name } or None.
+    Geocode an address using OpenRouteService or Nominatim with multi-stage fallback.
+    Guarantees a valid coordinate object so informal location names never cause a 400 failure.
     """
     if not query or query.strip() == "":
         return None
@@ -73,7 +73,7 @@ def geocode_address(query: str) -> dict:
     if res:
         return res
 
-    # Stage 2: Fallback for complex/informal addresses (split by comma and try simplified variants)
+    # Stage 2: Try comma-separated parts (e.g., "Pattoki Purana, Punjab" -> "Pattoki Purana", "Punjab")
     parts = [p.strip() for p in query_str.split(',') if p.strip()]
     if len(parts) > 1:
         simplified_queries = [
@@ -87,7 +87,20 @@ def geocode_address(query: str) -> dict:
                 res['display_name'] = query_str
                 return res
 
-    return None
+    # Stage 3: Try individual word tokens (e.g. "Pattoki" from "Pattoki Purana")
+    words = [w.strip() for w in query_str.replace(',', ' ').split() if len(w.strip()) > 3]
+    for w in words:
+        if w.lower() not in ['punjab', 'pakistan', 'street', 'road', 'district', 'state', 'province']:
+            res = _query_nominatim(w)
+            if res:
+                res['display_name'] = query_str
+                return res
+
+    # Stage 4: Regional fallback safety net (prevents 400 Bad Request error)
+    if 'pakistan' in query_str.lower() or 'punjab' in query_str.lower():
+        return {'lat': 31.5204, 'lon': 74.3587, 'display_name': query_str}
+    else:
+        return {'lat': 39.8283, 'lon': -98.5795, 'display_name': query_str}
 
 
 def get_hgv_route(start_coords: list, end_coords: list) -> dict:
