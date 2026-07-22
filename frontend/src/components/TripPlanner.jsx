@@ -141,7 +141,6 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
       return;
     }
     setDriverIdError(false);
-    setIsNavigating(false);
     setRouteReady(false);
     setLoading(true);
     setError(null);
