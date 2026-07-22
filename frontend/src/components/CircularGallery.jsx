@@ -612,15 +612,21 @@ export default function CircularGallery({
     let isMounted = true;
     resolveFont(font, fontUrl).then(resolvedFont => {
       if (!isMounted || !containerRef.current) return;
-      app = new App(containerRef.current, {
-        items,
-        bend,
-        textColor,
-        borderRadius,
-        font: resolvedFont,
-        scrollSpeed,
-        scrollEase
-      });
+      // Guard: container must have real dimensions before OGL creates a WebGL canvas
+      if (containerRef.current.clientWidth === 0 || containerRef.current.clientHeight === 0) return;
+      try {
+        app = new App(containerRef.current, {
+          items,
+          bend,
+          textColor,
+          borderRadius,
+          font: resolvedFont,
+          scrollSpeed,
+          scrollEase
+        });
+      } catch (err) {
+        console.warn('CircularGallery: WebGL init failed, skipping gallery.', err);
+      }
     });
 
     return () => {

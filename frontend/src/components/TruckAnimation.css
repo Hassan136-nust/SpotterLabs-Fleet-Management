@@ -119,14 +119,40 @@
 
 @media (max-width: 480px) {
   .get-started-truck-btn {
-    bottom: 24px;
-    right: 24px;
+    bottom: 80px;        /* higher up on mobile */
+    right: 50%;
+    transform: translateX(50%);
     padding: 12px 20px;
     font-size: 0.875rem;
     gap: 10px;
   }
 
+  /* Keep hover transform correct with the translateX centering */
+  .get-started-truck-btn:hover {
+    transform: translateX(50%) translateY(-3px) scale(1.04);
+  }
+
+  .get-started-truck-btn:active {
+    transform: translateX(50%) translateY(-1px) scale(0.98);
+  }
+
+  .btn-truck-svg {
+    width: 20px;
+    height: 20px;
+  }
+
   .truck-scroll-hint {
     bottom: 32px;
+  }
+
+  /* Canvas letterboxed to 75% of viewport height on mobile
+     so the animation feels smaller and less overwhelming */
+  .truck-anim-canvas {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vw !important;
+    height: 75vh !important;
+    position: absolute;
   }
 }
