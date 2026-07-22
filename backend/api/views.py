@@ -164,7 +164,13 @@ class DriverAPIView(APIView):
             data['remaining_cycle_hours'] = max(0.0, 70.0 - driver.used_cycle_hours)
             return Response(data, status=status.HTTP_200_OK)
         except Driver.DoesNotExist:
-            return Response({"error": "Driver not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({
+                "driver_id": driver_id,
+                "name": "",
+                "used_cycle_hours": 0.0,
+                "remaining_cycle_hours": 70.0,
+                "is_new": True
+            }, status=status.HTTP_200_OK)
 
 class CompleteTripAPIView(APIView):
     def post(self, request, *args, **kwargs):
