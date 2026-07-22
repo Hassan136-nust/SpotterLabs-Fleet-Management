@@ -135,7 +135,7 @@ class PlanTripAPIView(APIView):
 
 class HistoryAPIView(APIView):
     def get(self, request, *args, **kwargs):
-        dispatches = TripDispatch.objects.all().order_by('-created_at')
+        dispatches = TripDispatch.objects.select_related('driver').all().order_by('-created_at')
         records = []
         for d in dispatches:
             records.append({

@@ -274,6 +274,147 @@
   font-size: 1rem;
 }
 
+/* ── Start Journey Button ── */
+.planner-btn-start-journey {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  border: none;
+  padding: 13px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  letter-spacing: 0.07em;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+  transition: all 0.25s ease;
+  animation: journey-btn-appear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.planner-btn-start-journey:hover {
+  background: linear-gradient(135deg, #0ea572, #047857);
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.55);
+  transform: translateY(-1px);
+}
+
+.planner-btn-start-journey::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -75%;
+  width: 50%;
+  height: 200%;
+  background: rgba(255, 255, 255, 0.12);
+  transform: skewX(-20deg);
+  animation: shine-sweep 2s 0.5s ease-in-out infinite;
+}
+
+@keyframes shine-sweep {
+  0%   { left: -75%; opacity: 0; }
+  10%  { opacity: 1; }
+  100% { left: 125%; opacity: 0; }
+}
+
+@keyframes journey-btn-appear {
+  0%   { transform: scale(0.85) translateY(8px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.btn-play-icon {
+  font-size: 1rem;
+}
+
+/* ── Navigation Active Banner ── */
+.navigation-active-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #10b981;
+  letter-spacing: 0.04em;
+  animation: banner-slide-in 0.35s ease forwards;
+}
+
+@keyframes banner-slide-in {
+  0%   { transform: translateY(-6px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.nav-active-icon {
+  font-size: 1rem;
+  animation: nav-icon-pulse 1.2s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+@keyframes nav-icon-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(0.9); }
+}
+
+.navigation-active-banner span {
+  flex: 1;
+}
+
+.nav-end-btn {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-end-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ffffff;
+}
+
+/* ── Driver ID Error State ── */
+.driver-id-error-input {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.25) !important;
+  background-color: rgba(239, 68, 68, 0.05) !important;
+  animation: shake-input 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake-input {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(3px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+
+.driver-id-error-msg {
+  font-size: 0.7rem;
+  color: #f87171;
+  font-weight: 600;
+  margin-top: 2px;
+  padding: 4px 6px;
+  background: rgba(239, 68, 68, 0.08);
+  border-left: 2px solid #ef4444;
+  border-radius: 2px;
+  animation: error-msg-fade-in 0.25s ease forwards;
+}
+
+@keyframes error-msg-fade-in {
+  0%   { opacity: 0; transform: translateY(-4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 .planner-error-box {
   background-color: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
@@ -282,6 +423,7 @@
   border-radius: 6px;
   font-size: 0.75rem;
 }
+
 
 /* Node Preview */
 .route-nodes-preview-section {

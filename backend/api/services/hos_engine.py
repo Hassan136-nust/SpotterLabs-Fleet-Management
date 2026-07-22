@@ -1,5 +1,6 @@
 import datetime
 import math
+import bisect
 
 # constants
 MAX_DRIVING_HOURS = 11
@@ -30,27 +31,46 @@ def haversine_distance(coord1, coord2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
-def get_coordinate_at_distance(coordinates: list, target_miles: float) -> list:
-    """Finds coordinates [lat, lon] at target_miles along the route geometry coordinates list [[lon, lat], ...]"""
+def get_coordinate_at_distance(coordinates: list, target_miles: float, cumulative_distances: list = None) -> list:
+    """Finds coordinates [lat, lon] at target_miles along the route geometry coordinates list [[lon, lat], ...] using Binary Search if cumulative_distances is provided."""
     if not coordinates:
         return [39.8283, -98.5795]  # Default center of US
     if target_miles <= 0:
         return [coordinates[0][1], coordinates[0][0]]
 
-    cumulative_dist = 0.0
-    for i in range(len(coordinates) - 1):
-        p1 = coordinates[i]
-        p2 = coordinates[i + 1]
-        dist = haversine_distance(p1, p2)
-        if cumulative_dist + dist >= target_miles:
-            # Interpolate
-            ratio = (target_miles - cumulative_dist) / dist if dist > 0 else 0.0
-            lon = p1[0] + ratio * (p2[0] - p1[0])
-            lat = p1[1] + ratio * (p2[1] - p1[1])
-            return [lat, lon]
-        cumulative_dist += dist
+    # If cumulative_distances is not provided, fall back to linear calculation
+    if not cumulative_distances:
+        cumulative_dist = 0.0
+        for i in range(len(coordinates) - 1):
+            p1 = coordinates[i]
+            p2 = coordinates[i + 1]
+            dist = haversine_distance(p1, p2)
+            if cumulative_dist + dist >= target_miles:
+                ratio = (target_miles - cumulative_dist) / dist if dist > 0 else 0.0
+                lon = p1[0] + ratio * (p2[0] - p1[0])
+                lat = p1[1] + ratio * (p2[1] - p1[1])
+                return [lat, lon]
+            cumulative_dist += dist
+        return [coordinates[-1][1], coordinates[-1][0]]
 
-    return [coordinates[-1][1], coordinates[-1][0]]
+    # Use Binary Search
+    if target_miles >= cumulative_distances[-1]:
+        return [coordinates[-1][1], coordinates[-1][0]]
+
+    idx = bisect.bisect_left(cumulative_distances, target_miles)
+    if idx == 0:
+        return [coordinates[0][1], coordinates[0][0]]
+
+    p1 = coordinates[idx - 1]
+    p2 = coordinates[idx]
+    d1 = cumulative_distances[idx - 1]
+    d2 = cumulative_distances[idx]
+
+    segment_dist = d2 - d1
+    ratio = (target_miles - d1) / segment_dist if segment_dist > 0 else 0.0
+    lon = p1[0] + ratio * (p2[0] - p1[0])
+    lat = p1[1] + ratio * (p2[1] - p1[1])
+    return [lat, lon]
 
 def calculate_fuel_stops(total_miles: float) -> list:
     """Returns mileage marks for fuel stops (every 1000 miles)."""
@@ -133,6 +153,13 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
     """
     Simulates the HOS clocks minute-by-minute and calculates GPS coordinates for stops.
     """
+    # Precompute cumulative distances for binary search
+    cumulative_distances = [0.0]
+    total_dist = 0.0
+    for i in range(len(route_coords) - 1):
+        total_dist += haversine_distance(route_coords[i], route_coords[i+1])
+        cumulative_distances.append(total_dist)
+
     timeline = []
     events = []
     stops = []
@@ -211,7 +238,7 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
             continuous_driving = 0
             remaining_cycle = MAX_CYCLE_HOURS * 60
             
-            lat_lon = get_coordinate_at_distance(route_coords, current_miles)
+            lat_lon = get_coordinate_at_distance(route_coords, current_miles, cumulative_distances)
             stops.append({
                 "type": "rest",
                 "location": f"Rest Break (34h Restart) - Mile {round(current_miles)}",
@@ -231,7 +258,7 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
             on_duty_clock = 0
             continuous_driving = 0
             
-            lat_lon = get_coordinate_at_distance(route_coords, current_miles)
+            lat_lon = get_coordinate_at_distance(route_coords, current_miles, cumulative_distances)
             stops.append({
                 "type": "rest",
                 "location": f"Shift Rest Break (10h Reset) - Mile {round(current_miles)}",
@@ -250,7 +277,7 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
             on_duty_clock += 30
             continuous_driving = 0
             
-            lat_lon = get_coordinate_at_distance(route_coords, current_miles)
+            lat_lon = get_coordinate_at_distance(route_coords, current_miles, cumulative_distances)
             stops.append({
                 "type": "rest",
                 "location": f"Mandatory Rest Break (30m) - Mile {round(current_miles)}",
@@ -271,7 +298,7 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                 on_duty_clock = 0
                 continuous_driving = 0
                 
-                lat_lon = get_coordinate_at_distance(route_coords, current_miles)
+                lat_lon = get_coordinate_at_distance(route_coords, current_miles, cumulative_distances)
                 stops.append({
                     "type": "rest",
                     "location": f"Shift Rest Break (10h Reset) - Mile {round(current_miles)}",
@@ -287,7 +314,7 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                 on_duty_clock += 30
                 remaining_cycle -= 30
                 
-                lat_lon = get_coordinate_at_distance(route_coords, current_miles)
+                lat_lon = get_coordinate_at_distance(route_coords, current_miles, cumulative_distances)
                 stops.append({
                     "type": "fuel",
                     "location": f"Fueling Stop - Mile {round(current_miles)}",
@@ -323,7 +350,7 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                     on_duty_clock = 0
                     continuous_driving = 0
                     
-                    lat_lon = get_coordinate_at_distance(route_coords, current_miles)
+                    lat_lon = get_coordinate_at_distance(route_coords, current_miles, cumulative_distances)
                     stops.append({
                         "type": "rest",
                         "location": f"Shift Rest Break (10h Reset) - Mile {round(current_miles)}",
@@ -341,7 +368,7 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                     pickup_timer -= 1
             else:
                 # Add pickup stop
-                pickup_lat_lon = get_coordinate_at_distance(route_coords, current_miles)
+                pickup_lat_lon = get_coordinate_at_distance(route_coords, current_miles, cumulative_distances)
                 stops.append({
                     "type": "pickup",
                     "location": "Pickup stop",
@@ -375,7 +402,7 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                     on_duty_clock = 0
                     continuous_driving = 0
                     
-                    lat_lon = get_coordinate_at_distance(route_coords, current_miles)
+                    lat_lon = get_coordinate_at_distance(route_coords, current_miles, cumulative_distances)
                     stops.append({
                         "type": "rest",
                         "location": f"Shift Rest Break (10h Reset) - Mile {round(current_miles)}",
@@ -393,7 +420,7 @@ def run_hos_simulation(total_miles, leg1_hrs, leg2_hrs, current_cycle_used, rout
                     dropoff_timer -= 1
             else:
                 # Add dropoff stop
-                dropoff_lat_lon = get_coordinate_at_distance(route_coords, current_miles)
+                dropoff_lat_lon = get_coordinate_at_distance(route_coords, current_miles, cumulative_distances)
                 stops.append({
                     "type": "dropoff",
                     "location": "Dropoff stop",

@@ -31,7 +31,7 @@ class TripDispatch(models.Model):
     logs_data = models.JSONField()
     route_geometry = models.JSONField()
     
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     def __str__(self):
         return f"{self.pickup_location} -> {self.dropoff_location} ({self.distance_miles} mi)"

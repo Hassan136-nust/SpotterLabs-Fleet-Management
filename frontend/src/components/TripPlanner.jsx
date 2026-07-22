@@ -8,7 +8,9 @@ import {
   FiCpu, 
   FiLayers, 
   FiCompass, 
-  FiCloudRain 
+  FiCloudRain,
+  FiPlay,
+  FiNavigation
 } from 'react-icons/fi';
 import Sidebar from './Sidebar';
 import MapContainer from './MapContainer';
@@ -57,7 +59,10 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [driverIdError, setDriverIdError] = useState(false);
   const [warningModal, setWarningModal] = useState({ show: false, hours: 0 });
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [routeReady, setRouteReady] = useState(false);
 
   // Autocomplete and Dynamic suggestions
   const [suggestions, setSuggestions] = useState({ current: [], pickup: [], dropoff: [] });
@@ -127,6 +132,18 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
   // Calculate route and HOS metrics using Django backend
   const handleCalculateRoute = async (e) => {
     if (e) e.preventDefault();
+
+    // Validate Driver ID first
+    if (!driverInfo?.driverId || driverInfo.driverId.trim() === '') {
+      setDriverIdError(true);
+      // Scroll to driver id field smoothly
+      document.getElementById('driver-id-input')?.focus();
+      document.getElementById('driver-id-input')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    setDriverIdError(false);
+    setIsNavigating(false);
+    setRouteReady(false);
     setLoading(true);
     setError(null);
 
@@ -208,6 +225,9 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
       };
 
       setMetrics(calculatedMetrics);
+
+      // Mark route as ready to show Start Journey button
+      setRouteReady(true);
 
       // Trigger safety warning modal if remaining hours are negative
       if (calculatedMetrics.remainingCycle < 0) {
@@ -463,13 +483,22 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
                 <div className="planner-input-group">
                   <label className="planner-input-lbl">DRIVER ID</label>
                   <input
+                    id="driver-id-input"
                     type="text"
-                    className="planner-raw-input"
+                    className={`planner-raw-input${driverIdError ? ' driver-id-error-input' : ''}`}
                     placeholder="e.g. #44920"
                     value={driverInfo?.driverId || ''}
-                    onChange={e => setDriverInfo(prev => ({ ...prev, driverId: e.target.value }))}
+                    onChange={e => {
+                      setDriverInfo(prev => ({ ...prev, driverId: e.target.value }));
+                      if (e.target.value.trim()) setDriverIdError(false);
+                    }}
                     onBlur={handleDriverIdBlur}
                   />
+                  {driverIdError && (
+                    <div className="driver-id-error-msg">
+                      ⚠️ Driver ID is required to generate a route.
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -522,6 +551,27 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
               <button type="submit" className="planner-btn-orange" disabled={loading}>
                 <FiCpu className="btn-cpu-icon" /> {loading ? 'GENERATING...' : 'GENERATE ROUTE'}
               </button>
+
+              {/* Start Journey Button - shown only after route is generated */}
+              {routeReady && !isNavigating && (
+                <button
+                  type="button"
+                  className="planner-btn-start-journey"
+                  onClick={() => setIsNavigating(true)}
+                >
+                  <FiPlay className="btn-play-icon" />
+                  START JOURNEY
+                </button>
+              )}
+
+              {/* Navigation Active Indicator */}
+              {isNavigating && (
+                <div className="navigation-active-banner">
+                  <FiNavigation className="nav-active-icon" />
+                  <span>Navigation Active — Truck En Route</span>
+                  <button className="nav-end-btn" onClick={() => setIsNavigating(false)}>END</button>
+                </div>
+              )}
             </form>
 
             {error && <div className="planner-error-box">{error}</div>}
@@ -595,6 +645,7 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
               dropoffLoc={locations.dropoff}
               routeGeometry={routeGeometry}
               stops={plannedStops}
+              isNavigating={isNavigating}
             />
 
             {/* Floating Top Bar on Map */}
