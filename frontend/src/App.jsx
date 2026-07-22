@@ -50,7 +50,11 @@ function App() {
       fuelStops: 0,
       restStops: 0
     },
-    plannedStops: []
+    plannedStops: [],
+    tripStarted: false,
+    startTimestamp: null,
+    dispatchId: null,
+    routeReady: false
   });
 
   const handleTabChange = (tabName) => {
@@ -83,7 +87,11 @@ function App() {
         distance: 0, driveTime: 0, eta: '—', etaDate: '—',
         remainingCycle: 70, fuelStops: 0, restStops: 0
       },
-      plannedStops: []
+      plannedStops: [],
+      tripStarted: false,
+      startTimestamp: null,
+      dispatchId: null,
+      routeReady: false
     });
     
     setEldResult(null);

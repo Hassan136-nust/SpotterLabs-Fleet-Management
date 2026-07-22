@@ -60,8 +60,7 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
   const [error, setError] = useState(null);
   const [driverIdError, setDriverIdError] = useState(false);
   const [warningModal, setWarningModal] = useState({ show: false, hours: 0 });
-  const [routeReady, setRouteReady] = useState(false);
-  const [dispatchId, setDispatchId] = useState(null);
+  const [driverHoursModal, setDriverHoursModal] = useState({ show: false, hoursLeft: 0, driverName: '', driverId: '' });
 
   // Autocomplete and Dynamic suggestions
   const [suggestions, setSuggestions] = useState({ current: [], pickup: [], dropoff: [] });
@@ -147,6 +146,24 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
 
     try {
       const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+      // Check latest driver details from DB if driver ID is provided
+      let driverRemainingHours = parseFloat(inputs.cycleHours) || 70;
+      let fetchedDriverName = driverInfo?.driverName || '';
+      if (driverInfo?.driverId) {
+        try {
+          const driverRes = await fetch(`${API_BASE}/api/driver/${driverInfo.driverId}/`);
+          if (driverRes.ok) {
+            const dData = await driverRes.json();
+            driverRemainingHours = dData.remaining_cycle_hours;
+            fetchedDriverName = dData.name || fetchedDriverName;
+            setInputs(prev => ({ ...prev, cycleHours: driverRemainingHours.toFixed(1) }));
+          }
+        } catch (dErr) {
+          console.error("Driver lookup error:", dErr);
+        }
+      }
+
       const response = await fetch(`${API_BASE}/api/plan-trip/`, {
         method: 'POST',
         headers: {
@@ -156,7 +173,7 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
           current_location: inputs.currentLocation,
           pickup_location: inputs.pickupLocation,
           dropoff_location: inputs.dropoffLocation,
-          current_cycle_used: Math.max(0, Math.min(70, 70 - (parseFloat(inputs.cycleHours) || 70))),
+          current_cycle_used: Math.max(0, Math.min(70, 70 - driverRemainingHours)),
           driver_id: driverInfo?.driverId || '',
           driver_name: driverInfo?.driverName || '',
           truck_number: driverInfo?.truckNumber || '',
@@ -217,20 +234,29 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
         driveTime: parseFloat(totalDriveHrs.toFixed(1)),
         eta: finalEvent ? finalEvent.start : '06:00 PM',
         etaDate: finalDay.date.toUpperCase(),
-        remainingCycle: parseFloat((parseFloat(inputs.cycleHours) - data.daily_logs.reduce((acc, day) => acc + day.totals.on_duty + day.totals.driving, 0)).toFixed(1)),
+        remainingCycle: parseFloat((driverRemainingHours - data.daily_logs.reduce((acc, day) => acc + day.totals.on_duty + day.totals.driving, 0)).toFixed(1)),
         fuelStops: data.stops.filter(s => s.type === 'fuel').length,
         restStops: data.stops.filter(s => s.type === 'rest').length
       };
 
       setMetrics(calculatedMetrics);
 
-      // Store dispatch_id for journey start and auto-complete
-      setDispatchId(data.dispatch_id);
+      // Store dispatch_id and routeReady in shared tripPlanState for tab persistence
+      setTripPlanState(prev => ({
+        ...prev,
+        dispatchId: data.dispatch_id,
+        routeReady: true
+      }));
 
-      // Mark route as ready to show Start Journey button
-      setRouteReady(true);
+      // Trigger Modal displaying available driver hours left
+      setDriverHoursModal({
+        show: true,
+        hoursLeft: driverRemainingHours.toFixed(1),
+        driverName: fetchedDriverName || driverInfo?.driverName || 'Driver',
+        driverId: driverInfo?.driverId || ''
+      });
 
-      // Trigger safety warning modal if remaining hours are negative
+      // Trigger safety warning modal if remaining hours are negative (cycle exceeded)
       if (calculatedMetrics.remainingCycle < 0) {
         setWarningModal({
           show: true,
@@ -285,34 +311,42 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
   };
 
 
-  // Trip started state
-  const [tripStarted, setTripStarted] = useState(false);
+  // Live Elapsed Timer that updates even when navigating back and forth across tabs
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const elapsedIntervalRef = React.useRef(null);
 
-  // Start Journey: stay on page, show status, auto-complete in background
-  const handleStartJourney = () => {
-    setRouteReady(false);
-    setTripStarted(true);
-    setElapsedSeconds(0);
+  useEffect(() => {
+    if (!tripPlanState.tripStarted || !tripPlanState.startTimestamp) return;
 
-    // Tick elapsed timer every second
-    elapsedIntervalRef.current = setInterval(() => {
-      setElapsedSeconds(prev => prev + 1);
+    const calcElapsed = () => Math.floor((Date.now() - tripPlanState.startTimestamp) / 1000);
+    setElapsedSeconds(calcElapsed());
+
+    const timer = setInterval(() => {
+      setElapsedSeconds(calcElapsed());
     }, 1000);
 
+    return () => clearInterval(timer);
+  }, [tripPlanState.tripStarted, tripPlanState.startTimestamp]);
+
+  // Start Journey: update tripPlanState so it persists across tab switching
+  const handleStartJourney = () => {
+    const now = Date.now();
+    setTripPlanState(prev => ({
+      ...prev,
+      tripStarted: true,
+      startTimestamp: now,
+      routeReady: false
+    }));
+
     // Auto-complete trip after the actual drive time elapses (real time)
-    if (dispatchId && metrics.driveTime > 0) {
+    if (tripPlanState.dispatchId && metrics.driveTime > 0) {
       const driveDurationMs = metrics.driveTime * 60 * 60 * 1000;
       setTimeout(async () => {
-        // Clear elapsed timer
-        clearInterval(elapsedIntervalRef.current);
         try {
           const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
           await fetch(`${API_BASE}/api/complete-trip/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ dispatch_id: dispatchId })
+            body: JSON.stringify({ dispatch_id: tripPlanState.dispatchId })
           });
         } catch (err) {
           console.error('Auto-complete trip failed:', err);
@@ -600,7 +634,7 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
               </button>
 
               {/* Start Journey Button - shown only after route is generated */}
-              {routeReady && (
+              {tripPlanState.routeReady && !tripPlanState.tripStarted && (
                 <button
                   type="button"
                   className="planner-btn-start-journey"
@@ -612,7 +646,7 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
               )}
 
               {/* Trip Active Status - shown after journey started */}
-              {tripStarted && (
+              {tripPlanState.tripStarted && (
                 <div className="trip-active-status-card">
                   <div className="trip-active-top-row">
                     <span className="trip-active-dot" />
@@ -765,6 +799,37 @@ const TripPlanner = ({ onTabChange, onNewDispatch, onEldSolved, tripPlanState, s
         </div>
 
       </div>
+
+      {/* Driver Hours Status Modal */}
+      {driverHoursModal.show && (
+        <div className="warning-modal-overlay">
+          <div className="warning-modal-content" style={{ border: '1px solid #3b82f6', boxShadow: '0 0 25px rgba(59, 130, 246, 0.25)' }}>
+            <div className="warning-modal-icon" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>ℹ️</div>
+            <h3 className="warning-modal-title" style={{ color: '#60a5fa' }}>DRIVER CYCLE HOURS STATUS</h3>
+            <p className="warning-modal-text">
+              {driverHoursModal.driverName && driverHoursModal.driverName.trim() !== '' && driverHoursModal.driverName !== 'Driver' && driverHoursModal.driverName !== 'Unknown Driver' ? (
+                <>
+                  Driver <span className="warning-highlight" style={{ color: '#60a5fa' }}>{driverHoursModal.driverName}</span> {driverHoursModal.driverId ? `(#${driverHoursModal.driverId})` : ''} has <span className="warning-highlight" style={{ color: '#10b981' }}>{driverHoursModal.hoursLeft} hours left</span> per week / 70-hr cycle.
+                </>
+              ) : (
+                <>
+                  You have <span className="warning-highlight" style={{ color: '#10b981' }}>{driverHoursModal.hoursLeft} hours left</span> per week / 70-hr cycle.
+                </>
+              )}
+            </p>
+            <p className="warning-modal-subtext">
+              Route and HOS metrics have been configured according to available cycle hours.
+            </p>
+            <button 
+              className="warning-modal-btn"
+              style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: '#ffffff' }}
+              onClick={() => setDriverHoursModal({ show: false, hoursLeft: 0, driverName: '', driverId: '' })}
+            >
+              PROCEED TO ROUTE
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* FMCSA HOS Compliance Warning Modal */}
       {warningModal.show && (
